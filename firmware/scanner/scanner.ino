@@ -36,6 +36,9 @@
 #include <NimBLEAdvertisedDevice.h>
 
 #include <ArduinoJson.h>
+#include <esp_task_wdt.h>
+
+#define WDT_TIMEOUT_SECONDS 30
 
 // ---------------------------------------------------------------------------
 // Types
@@ -69,6 +72,8 @@ static uint32_t     s_scanStartMs   = 0;
 
 // WiFi status cache.
 static bool         s_wifiOk        = false;
+static bool         s_wifiConnecting = false;
+static uint32_t     s_wifiConnectStartMs = 0;
 
 // ---------------------------------------------------------------------------
 // LED helpers
@@ -223,24 +228,37 @@ static AuraScanCallbacks s_scanCallbacks;
 // WiFi helpers
 // ---------------------------------------------------------------------------
 
-static bool connectWiFi() {
-  if (WiFi.status() == WL_CONNECTED) return true;
-
-  Serial.printf("[WiFi] Connecting to %s ...\n", WIFI_SSID);
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-
-  uint32_t start = millis();
-  while (WiFi.status() != WL_CONNECTED) {
-    if (millis() - start > WIFI_CONNECT_TIMEOUT_MS) {
-      Serial.println("[WiFi] Connection timed out.");
-      return false;
+static void maintainWiFi() {
+  if (WiFi.status() == WL_CONNECTED) {
+    if (!s_wifiOk) {
+      s_wifiOk = true;
+      s_wifiConnecting = false;
+      Serial.printf("[WiFi] Connected.  IP: %s\n", WiFi.localIP().toString().c_str());
     }
-    delay(200);
+    return;
   }
-  Serial.printf("[WiFi] Connected.  IP: %s\n",
-                WiFi.localIP().toString().c_str());
-  return true;
+
+  // Disconnected state
+  if (s_wifiOk) {
+    Serial.println("[WiFi] Connection lost. Reconnecting in background...");
+    s_wifiOk = false;
+    s_wifiConnecting = false;
+  }
+
+  if (!s_wifiConnecting) {
+    Serial.printf("[WiFi] Connecting to %s ...\n", WIFI_SSID);
+    WiFi.mode(WIFI_STA);
+    WiFi.disconnect();
+    delay(10);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    s_wifiConnectStartMs = millis();
+    s_wifiConnecting = true;
+  } else {
+    if (millis() - s_wifiConnectStartMs > (uint32_t)WIFI_CONNECT_TIMEOUT_MS) {
+      Serial.println("[WiFi] Connection timed out. Will retry.");
+      s_wifiConnecting = false; // reset to try again
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -378,8 +396,19 @@ void setup() {
 #endif
   ledOff();
 
+  // ---- WDT init ----
+  esp_task_wdt_init(WDT_TIMEOUT_SECONDS, true);
+  esp_task_wdt_add(NULL);
+
   // ---- WiFi ----
-  s_wifiOk = connectWiFi();
+  Serial.printf("[WiFi] Initial connection to %s ...\n", WIFI_SSID);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  uint32_t startMs = millis();
+  while (WiFi.status() != WL_CONNECTED && (millis() - startMs < (uint32_t)WIFI_CONNECT_TIMEOUT_MS)) {
+    delay(200);
+  }
+  s_wifiOk = (WiFi.status() == WL_CONNECTED);
   if (!s_wifiOk) ledRed(); else ledGreen();
   delay(LED_BLINK_MS);
   ledOff();
@@ -400,7 +429,10 @@ void setup() {
 // loop()
 // ---------------------------------------------------------------------------
 void loop() {
+  esp_task_wdt_reset(); // feed the watchdog
   uint32_t now = millis();
+
+  maintainWiFi(); // Non-blocking WiFi check/reconnect
 
   // ---- Upload window ----
   // Every UPLOAD_INTERVAL_MS: stop scan, upload, restart scan.
@@ -408,12 +440,6 @@ void loop() {
     s_lastUploadMs = now;
 
     stopScan();
-
-    // Ensure WiFi is up.
-    if (!s_wifiOk || WiFi.status() != WL_CONNECTED) {
-      Serial.println("[WiFi] Reconnecting...");
-      s_wifiOk = connectWiFi();
-    }
 
     if (s_wifiOk) {
       bool ok = uploadReadings();
@@ -423,6 +449,7 @@ void loop() {
         ledBlink(ledRed, LED_BLINK_MS * 2);
       }
     } else {
+      Serial.println("[WiFi] Not connected, skipping upload.");
       ledBlink(ledRed, LED_BLINK_MS * 2);
     }
 
