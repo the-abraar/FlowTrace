@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-flowtrace-bg text-flowtrace-text;
+  }
+}
+
+@layer components {
+  .flowtrace-card {
+    @apply bg-flowtrace-card border border-flowtrace-border rounded-xl p-4;
+  }
+  .flowtrace-card-glow {
+    @apply bg-flowtrace-card border border-flowtrace-border rounded-xl p-4;
+    box-shadow: 0 0 20px rgba(0, 245, 255, 0.05);
+  }
+  .neon-text {
+    color: #00f5ff;
+    text-shadow: 0 0 10px rgba(0, 245, 255, 0.6);
+  }
+  .neon-border {
+    border-color: #00f5ff;
+    box-shadow: 0 0 8px rgba(0, 245, 255, 0.3);
+  }
+  .stat-value {
+    @apply text-2xl font-bold font-mono;
+    color: #00f5ff;
+    text-shadow: 0 0 8px rgba(0, 245, 255, 0.5);
+  }
+  .nav-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+           text-flowtrace-textMuted transition-all duration-200 cursor-pointer;
+  }
+  .nav-item:hover {
+    @apply text-flowtrace-text bg-flowtrace-border;
+  }
+  .nav-item.active {
+    @apply text-flowtrace-neon bg-flowtrace-border;
+    box-shadow: inset 3px 0 0 #00f5ff;
+  }
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold font-mono;
+  }
+  .badge-green  { @apply badge bg-emerald-900/50 text-emerald-400; }
+  .badge-red    { @apply badge bg-red-900/50    text-red-400; }
+  .badge-blue   { @apply badge bg-blue-900/50   text-blue-400; }
+  .badge-orange { @apply badge bg-orange-900/50 text-orange-400; }
+  .badge-yellow { @apply badge bg-yellow-900/50 text-yellow-400; }
+}
