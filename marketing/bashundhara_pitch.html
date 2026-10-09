@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlowTrace for Bashundhara Playzone</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            900: '#134e4a',
+                        },
+                        dark: '#0f172a'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .hero-pattern {
+            background-color: #0f172a;
+            background-image: radial-gradient(circle at 10% 20%, rgba(20, 184, 166, 0.15) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 80%, rgba(13, 148, 136, 0.15) 0%, transparent 40%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 antialiased">
+
+    <!-- Hero Section -->
+    <header class="hero-pattern text-white py-24 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="flex items-center gap-2 mb-8">
+                <div class="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center font-bold text-xl">F</div>
+                <span class="text-xl font-semibold tracking-wide">FlowTrace</span>
+            </div>
+            <h1 class="text-4xl md:text-6xl font-bold leading-tight mb-6">
+                Next-Generation Venue Intelligence for <br>
+                <span class="text-brand-500">Bashundhara Playzone</span>
+            </h1>
+            <p class="text-lg md:text-xl text-gray-300 max-w-3xl mb-10 leading-relaxed font-light">
+                Upgrade from manual ticket operations to a seamless, data-driven RFID ecosystem across all 3 floors. Deliver a frictionless guest experience while unlocking powerful analytics to grow your revenue.
+            </p>
+            <a href="#how-it-works" class="inline-block bg-brand-500 text-white font-semibold px-8 py-4 rounded-full hover:bg-brand-600 transition-colors shadow-lg shadow-brand-500/30">
+                Explore the Solution
+            </a>
+        </div>
+    </header>
+
+    <!-- The Problem & Solution -->
+    <section class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-2 gap-16 items-center">
+                <div>
+                    <h2 class="text-sm font-bold text-brand-600 uppercase tracking-widest mb-2">The Current Challenge</h2>
+                    <h3 class="text-3xl font-bold mb-6">Blind Spots in a 70-Ride Operation</h3>
+                    <p class="text-gray-600 mb-6 leading-relaxed">
+                        Currently, staff manually manage coins and log rides across three floors. Customers buy tickets upfront and wait for attendants to start the ride. 
+                    </p>
+                    <ul class="space-y-4 text-gray-600">
+                        <li class="flex items-start">
+                            <svg class="w-6 h-6 text-red-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            <span><strong>No Customer Data:</strong> You don't know who is riding, their age, or their preferences.</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-6 h-6 text-red-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            <span><strong>High Friction:</strong> Guests wait in line to buy tickets, then wait for staff to process coins.</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-6 h-6 text-red-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            <span><strong>Missed Revenue:</strong> No way to retarget customers or upsell rides they haven't tried.</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="bg-gray-50 rounded-2xl p-8 border border-gray-100 shadow-sm">
+                    <h2 class="text-sm font-bold text-brand-600 uppercase tracking-widest mb-2">The FlowTrace Solution</h2>
+                    <h3 class="text-3xl font-bold mb-6">Tap, Ride, and Analyze</h3>
+                    <p class="text-gray-600 mb-6 leading-relaxed">
+                        We replace the manual coin system with smart RFID cards and custom software, turning your Playzone into an intelligent, data-gathering ecosystem.
+                    </p>
+                    <ul class="space-y-4 text-gray-600">
+                        <li class="flex items-start">
+                            <svg class="w-6 h-6 text-brand-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <span><strong>Zero-Friction Entry:</strong> Guests grab a card, walk in, and simply tap at any of the 70 rides to play.</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-6 h-6 text-brand-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <span><strong>Smart Checkout:</strong> Pay at the end based on exact usage.</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-6 h-6 text-brand-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <span><strong>Automated Data Collection:</strong> Every tap logs exactly which rides are used, when, and by whom.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Flow -->
+    <section id="how-it-works" class="py-20 bg-gray-50 border-t border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold mb-4">The Guest Experience Flow</h2>
+                <p class="text-gray-500 max-w-2xl mx-auto">A seamless journey that naturally incentivizes guests to share their data.</p>
+            </div>
+            
+            <div class="grid md:grid-cols-4 gap-8">
+                <!-- Step 1 -->
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center relative">
+                    <div class="w-12 h-12 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center font-bold text-xl mx-auto mb-6">1</div>
+                    <h4 class="font-bold text-xl mb-3">Grab & Go</h4>
+                    <p class="text-gray-500 text-sm">Guests receive an RFID card upon entry. No upfront payment or waiting in line for tickets.</p>
+                </div>
+                
+                <!-- Step 2 -->
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center relative">
+                    <div class="w-12 h-12 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center font-bold text-xl mx-auto mb-6">2</div>
+                    <h4 class="font-bold text-xl mb-3">Tap to Ride</h4>
+                    <p class="text-gray-500 text-sm">Guests freely explore the 3 floors. A quick tap activates the ride instantly, bypassing staff bottlenecks.</p>
+                </div>
+                
+                <!-- Step 3 -->
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-brand-200 text-center relative transform md:-translate-y-2 ring-1 ring-brand-500">
+                    <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-brand-500 text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">Data Capture</div>
+                    <div class="w-12 h-12 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center font-bold text-xl mx-auto mb-6 mt-2">3</div>
+                    <h4 class="font-bold text-xl mb-3">Checkout & Discount</h4>
+                    <p class="text-gray-500 text-sm">At drop-off, the kiosk prompts: <em>"Enter your phone/email to create an account and get 20-30% off today's bill!"</em></p>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center relative">
+                    <div class="w-12 h-12 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center font-bold text-xl mx-auto mb-6">4</div>
+                    <h4 class="font-bold text-xl mb-3">Personalized Return</h4>
+                    <p class="text-gray-500 text-sm">Next visit, the system recognizes them: <em>"You loved Bumper Cars! Try the VR Coaster today for 15% off."</em></p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Analytics Dashboard for Owners -->
+    <section class="py-24 bg-dark text-white relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="grid md:grid-cols-2 gap-16 items-center">
+                <div>
+                    <h2 class="text-sm font-bold text-brand-400 uppercase tracking-widest mb-2">For Business Owners</h2>
+                    <h3 class="text-4xl font-bold mb-6">Unprecedented Venue Intelligence</h3>
+                    <p class="text-gray-300 mb-8 leading-relaxed font-light text-lg">
+                        Even if a user doesn't create an account, every tap is recorded. FlowTrace aggregates millions of data points to give you a god's-eye view of your business performance.
+                    </p>
+                    
+                    <div class="space-y-6">
+                        <div class="flex items-start">
+                            <div class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-brand-400 mr-4 flex-shrink-0">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-xl mb-1">Ride Popularity Matrix</h4>
+                                <p class="text-gray-400 text-sm">See exactly which of your 70 rides are generating the most engagement, categorized by user demographic and time of day.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-brand-400 mr-4 flex-shrink-0">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-xl mb-1">Temporal Heatmaps</h4>
+                                <p class="text-gray-400 text-sm">Analyze peak hours, compare holiday vs. weekday traffic, and optimize staff deployment across the 3 floors accordingly.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-brand-400 mr-4 flex-shrink-0">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-xl mb-1">Investment ROI Forecasting</h4>
+                                <p class="text-gray-400 text-sm">Use concrete utilization data to decide which old rides to retire and what type of new rides will yield the highest return on investment.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Mock Dashboard UI -->
+                <div class="bg-gray-900 rounded-xl border border-gray-700 shadow-2xl p-1 overflow-hidden">
+                    <div class="bg-gray-800 rounded-lg p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h4 class="font-semibold text-gray-200">Bashundhara Playzone Analytics</h4>
+                            <span class="bg-brand-500/20 text-brand-400 text-xs px-2 py-1 rounded">Live Data</span>
+                        </div>
+                        
+                        <!-- Chart Mockup -->
+                        <div class="mb-6">
+                            <div class="text-xs text-gray-500 mb-2">Most Popular Rides (Today)</div>
+                            <div class="space-y-3">
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span class="text-gray-300">VR Rollercoaster (Floor 3)</span>
+                                        <span class="text-brand-400">1,245 taps</span>
+                                    </div>
+                                    <div class="w-full bg-gray-700 rounded-full h-1.5"><div class="bg-brand-500 h-1.5 rounded-full" style="width: 85%"></div></div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span class="text-gray-300">Bumper Cars (Floor 1)</span>
+                                        <span class="text-brand-400">980 taps</span>
+                                    </div>
+                                    <div class="w-full bg-gray-700 rounded-full h-1.5"><div class="bg-brand-500 h-1.5 rounded-full" style="width: 65%"></div></div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span class="text-gray-300">Arcade Zone (Floor 2)</span>
+                                        <span class="text-brand-400">830 taps</span>
+                                    </div>
+                                    <div class="w-full bg-gray-700 rounded-full h-1.5"><div class="bg-brand-500 h-1.5 rounded-full" style="width: 55%"></div></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Demographics Mockup -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-gray-700/50 p-4 rounded-lg">
+                                <div class="text-xs text-gray-500 mb-1">Top Demographic</div>
+                                <div class="text-lg font-semibold text-white">Males, 18-24</div>
+                                <div class="text-xs text-brand-400 mt-1">+12% vs last week</div>
+                            </div>
+                            <div class="bg-gray-700/50 p-4 rounded-lg">
+                                <div class="text-xs text-gray-500 mb-1">Opt-in Conversion</div>
+                                <div class="text-lg font-semibold text-white">42.8%</div>
+                                <div class="text-xs text-gray-400 mt-1">Availing 20% discount</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer CTA -->
+    <section class="py-20 bg-brand-600 text-white text-center">
+        <div class="max-w-4xl mx-auto px-4">
+            <h2 class="text-3xl font-bold mb-6">Ready to Modernize Your Theme Park?</h2>
+            <p class="text-brand-100 mb-10 max-w-2xl mx-auto text-lg">Stop losing valuable customer data. Start increasing repeat visits and optimizing your operations with FlowTrace today.</p>
+            <button class="bg-white text-brand-600 font-bold px-10 py-4 rounded-full shadow-lg hover:bg-gray-50 transition-colors text-lg">
+                Schedule a Demo
+            </button>
+        </div>
+    </section>
+
+</body>
+</html>
