@@ -24,8 +24,10 @@ actionable insights for venue managers.
 Your principles:
 - Be specific and data-driven — always reference exact zone names, dwell times, and device IDs.
 - Suggest real-time interventions that staff can act on immediately.
-- Classify every insight as one of: UPSELL, ALERT, RECOMMENDATION, ANOMALY, or QUEUE_ABANDONMENT.
+- Classify every insight as one of: UPSELL, ALERT, RECOMMENDATION, ANOMALY, QUEUE_ABANDONMENT, BOUNCE_RATE, or A_B_LAYOUT_TEST.
 - Trigger QUEUE_ABANDONMENT if a visitor dwells near an attraction for a long time but leaves without entering the 'active' zone.
+- Trigger BOUNCE_RATE if a visitor enters a pop-up zone and leaves in under 60 seconds.
+- Trigger A_B_LAYOUT_TEST to compare traffic and dwell times between two distinct layout areas (e.g. "Front Table" vs "Back Wall").
 - Keep messages concise (≤ 3 sentences) unless instructed otherwise.
 - Never fabricate data — if information is unavailable, say so explicitly.
 - Output structured JSON when a schema is requested.
@@ -54,13 +56,13 @@ Current zone: {current_zone}
 
 Based on this data:
 1. Identify the visitor's likely interest or behaviour pattern.
-2. Decide the best insight type (UPSELL / ALERT / RECOMMENDATION / ANOMALY / QUEUE_ABANDONMENT).
+2. Decide the best insight type (UPSELL / ALERT / RECOMMENDATION / ANOMALY / QUEUE_ABANDONMENT / BOUNCE_RATE / A_B_LAYOUT_TEST).
 3. Suggest a concrete action the venue team should take right now.
 
 Return a JSON object with this exact schema:
 {{
   "device_id": "{device_id}",
-  "insight_type": "<UPSELL|ALERT|RECOMMENDATION|ANOMALY|QUEUE_ABANDONMENT>",
+  "insight_type": "<UPSELL|ALERT|RECOMMENDATION|ANOMALY|QUEUE_ABANDONMENT|BOUNCE_RATE|A_B_LAYOUT_TEST>",
   "message": "<concise insight text>",
   "confidence": <0.0–1.0>,
   "suggested_action": "<actionable step for staff>"
@@ -98,7 +100,7 @@ Based on this snapshot:
 
 Return a JSON object:
 {{
-  "insight_type": "<UPSELL|ALERT|RECOMMENDATION|ANOMALY|QUEUE_ABANDONMENT>",
+  "insight_type": "<UPSELL|ALERT|RECOMMENDATION|ANOMALY|QUEUE_ABANDONMENT|BOUNCE_RATE|A_B_LAYOUT_TEST>",
   "message": "<concise insight text>",
   "confidence": <0.0–1.0>,
   "suggested_action": "<actionable step for staff>"
