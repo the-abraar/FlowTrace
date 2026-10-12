@@ -397,3 +397,12 @@ This is a 30-day demo project that has not passed its own Day-11 milestone ("Bac
 5. **You:** legal and privacy review of tag-based tracking in a public venue, and a consent signage plan.
 6. **You:** talk to 3 venue operators about what they would pay for; only then build billing or multi-venue support.
 7. **Code:** make the module-level `position_engine` use calibration parameters; purge old Device rows.
+
+### Update 9 (2026-10-12, stopped at the 70% usage ceiling)
+
+**Done this round:** retro guardrails (`scripts/check.sh`, pre-commit hook `.githooks/pre-commit`, CI workflow, `AGENTS.md`, `CODING_STANDARDS.md`); orphaned worktrees removed (Suggest.Bike); all work committed and pushed to `origin/main`. Usage mirror `../usage.md` is live (status line writes the 5-hour and 7-day percentages); read it before starting a round.
+
+**I was in the middle of:** nothing half-done. The last action was this log. No uncommitted work remains apart from this file.
+
+**Not verified:** the GitHub CI workflows have never run; the pre-commit hook has never blocked a real commit; no real-device, real-user or real-host testing.
+**Next, first:** buy nodes, compile and flash firmware with `API_KEY` and `INGEST_API_KEY` set, run the field protocol; decide ONE product (Update 8).
