@@ -1,13 +1,13 @@
+from fastapi import Depends
+from auth import require_read
 from fastapi import APIRouter
-from pydantic import BaseModel
 
-router = APIRouter(prefix="/api/v1/analytics", tags=["Analytics"])
+router = APIRouter(prefix="/api/v1/analytics", tags=["Analytics"], dependencies=[Depends(require_read)])
 
 @router.get("/summary")
 def get_venue_summary():
-    # In a real app we query the VenueZoneAnalytics global
+    # In a real app we query the ZoneDetector global
     from main import zone_analytics
     return {
-        "heatmap": zone_analytics.get_heatmap_data(),
-        "occupancy": zone_analytics.get_current_occupancy()
+        "zones": zone_analytics.get_zone_stats()
     }

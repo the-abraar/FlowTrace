@@ -63,6 +63,13 @@ class Settings(BaseSettings):
     VENUE_ID: str = Field(default="venue-001")
     VENUE_NAME: str = Field(default="Project FlowTrace Demo Venue")
 
+    VENUE_WIDTH_M: float | None = Field(default=None, description="Room x extent; positions clamped to [0,W] if set")
+    VENUE_HEIGHT_M: float | None = Field(default=None, description="Room y extent; positions clamped to [0,H] if set")
+
+    # ── Tracking limits ──────────────────────────────────────────────────────
+    DEVICE_TTL_SECONDS: float = Field(default=600.0, description="Evict tracked devices idle longer than this")
+    MAX_TRACKED_DEVICES: int = Field(default=5000, description="Reject new devices beyond this many")
+
     # ── Logging ───────────────────────────────────────────────────────────────
     LOG_LEVEL: str = Field(default="INFO")
 

@@ -7,7 +7,7 @@ import { useFlowTraceStore } from '../stores/flowtraceStore'
  *  - Clean disconnect on unmount
  *  - Exposes connection status from global store
  */
-export function useWebSocket(url = 'ws://localhost:8000/ws/dashboard') {
+export function useWebSocket(url = 'ws://localhost:8000/ws') {
   const connectWebSocket = useFlowTraceStore((s) => s.connectWebSocket)
   const disconnectWebSocket = useFlowTraceStore((s) => s.disconnectWebSocket)
   const wsStatus = useFlowTraceStore((s) => s.wsStatus)

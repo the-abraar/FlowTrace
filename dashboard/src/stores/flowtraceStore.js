@@ -77,130 +77,154 @@ function generateInsight(index) {
   }
 }
 
-// ─── Initial state ───────────────────────────────────────────────────────────
-const INITIAL_DEVICES = Array.from({ length: 24 }, (_, i) => generateDevice(i + 1))
-const INITIAL_NODES = NODES.map(generateNode)
-const INITIAL_INSIGHTS = Array.from({ length: 8 }, (_, i) => generateInsight(i))
+// ─── Store ───────────────────────────────────────────────────────────────────
+// connection: 'connected' (live backend) | 'demo' (backend unreachable, MOCK data) | 'offline' (lost live backend, data frozen)
+const WS_URL = 'ws://localhost:8000/ws'
+const EMPTY_STATS = { totalToday: 0, currentlyActive: 0, avgDwellMinutes: 0, topZone: '—', conversionEvents: null }
 
-// ─── Zustand store ───────────────────────────────────────────────────────────
+async function api(path) {
+  const res = await fetch(`/api/v1${path}`)
+  if (!res.ok) throw new Error(`${res.status} ${path}`)
+  return res.json()
+}
+
+let _retry = null
+let _poll = null
+
 export const useFlowTraceStore = create(
   subscribeWithSelector((set, get) => ({
-    // State slices
-    devices: INITIAL_DEVICES,
-    insights: INITIAL_INSIGHTS.sort((a, b) => b.timestamp - a.timestamp),
-    nodeHealth: INITIAL_NODES,
-    wsStatus: 'disconnected',  // 'connected' | 'disconnected' | 'reconnecting'
+    devices: [],
+    insights: [],
+    nodeHealth: [],
+    insightsNote: null,       // why AI insights are empty when connected (e.g. 503 message)
+    connection: 'offline',
+    wsStatus: 'disconnected',  // raw socket state, kept for existing consumers
     wsRef: null,
+    venueStats: EMPTY_STATS,
 
-    // Venue aggregate stats (computed / updated by WS)
-    venueStats: {
-      totalToday: 312,
-      currentlyActive: INITIAL_DEVICES.length,
-      avgDwellMinutes: 18,
-      topZone: 'VR Zone',
-      conversionEvents: 47,
-    },
-
-    // ── Actions ──────────────────────────────────────────────────────────────
     setWsStatus: (status) => set({ wsStatus: status }),
 
     updateDevices: (payload) => {
+      // live backend: upsert by device_id (positions message); trail kept for the ghost-trail view
       set((state) => {
-        const updated = state.devices.map((d) => {
-          const patch = payload.find((p) => p.id === d.id)
-          if (!patch) return d
-          const trail = [
-            { x: d.x, y: d.y, t: Date.now() },
-            ...d.trail.slice(0, 119),            // keep last 120 points ≈ 10 min
-          ]
-          return { ...d, ...patch, trail, lastSeen: Date.now() }
-        })
-        return { devices: updated }
+        const byId = new Map(state.devices.map((d) => [d.id, d]))
+        for (const p of payload) {
+          const id = p.id ?? p.device_id
+          const d = byId.get(id)
+          const trail = d ? [{ x: d.x, y: d.y, t: Date.now() }, ...d.trail.slice(0, 119)] : []
+          byId.set(id, { dwellTime: 0, rssi: null, firstSeen: Date.now(), ...d, ...p, id, trail, lastSeen: Date.now() })
+        }
+        return { devices: [...byId.values()] }
       })
     },
 
     addDevice: (device) =>
       set((state) => ({ devices: [...state.devices, { ...device, trail: [] }] })),
-
     removeDevice: (id) =>
       set((state) => ({ devices: state.devices.filter((d) => d.id !== id) })),
-
     addInsight: (insight) =>
-      set((state) => ({
-        insights: [insight, ...state.insights].slice(0, 100),
-      })),
-
+      set((state) => ({ insights: [insight, ...state.insights].slice(0, 100) })),
     markInsightActed: (id) =>
       set((state) => ({
-        insights: state.insights.map((i) =>
-          i.id === id ? { ...i, acted: true } : i
-        ),
+        insights: state.insights.map((i) => (i.id === id ? { ...i, acted: true } : i)),
       })),
-
     updateNodeHealth: (nodes) => set({ nodeHealth: nodes }),
-
     updateVenueStats: (patch) =>
       set((state) => ({ venueStats: { ...state.venueStats, ...patch } })),
 
-    // ── WebSocket connection ──────────────────────────────────────────────────
-    connectWebSocket: () => {
-      const { wsRef } = get()
-      if (wsRef && wsRef.readyState === WebSocket.OPEN) return
-
-      const connect = () => {
-        set({ wsStatus: 'reconnecting' })
-
-        let ws
-        try {
-          ws = new WebSocket('ws://localhost:8000/ws/dashboard')
-        } catch {
-          // Backend not running — fall through to mock mode
-          startMockUpdates(set, get)
-          set({ wsStatus: 'connected' })
-          return
-        }
-
-        set({ wsRef: ws })
-
-        ws.onopen = () => {
-          console.log('[FlowTrace WS] Connected')
-          set({ wsStatus: 'connected' })
-        }
-
-        ws.onmessage = (event) => {
-          try {
-            const msg = JSON.parse(event.data)
-            handleWsMessage(msg, set, get)
-          } catch (e) {
-            console.warn('[FlowTrace WS] Invalid message', e)
-          }
-        }
-
-        ws.onerror = () => {
-          console.warn('[FlowTrace WS] Error — falling back to mock mode')
-          ws.close()
-        }
-
-        ws.onclose = () => {
-          set({ wsStatus: 'reconnecting', wsRef: null })
-          console.log('[FlowTrace WS] Disconnected — retrying in 3s')
-          setTimeout(() => {
-            // After two failed attempts, use mock data
-            startMockUpdates(set, get)
-            set({ wsStatus: 'connected' })
-          }, 3000)
-        }
+    // Pull real values from /api/v1 (only called while connected)
+    refreshFromApi: async () => {
+      const [nodes, devs, summary, ins] = await Promise.allSettled([
+        api('/nodes'), api('/devices'), api('/analytics/summary'), api('/insights'),
+      ])
+      if (get().connection !== 'connected') return
+      const patch = {}
+      if (nodes.status === 'fulfilled') {
+        patch.nodeHealth = nodes.value.map((n) => ({
+          id: n.id, x: n.x_pos, y: n.y_pos, online: !!n.active, lastSeen: null, rssi: null, readingRate: null,
+        }))
       }
+      const stats = { ...get().venueStats }
+      if (devs.status === 'fulfilled') stats.totalToday = devs.value.length
+      if (summary.status === 'fulfilled') {
+        const zs = Object.entries(summary.value.zones ?? {})
+        const visited = zs.filter(([, z]) => z.total_visits > 0)
+        stats.currentlyActive = zs.reduce((n, [, z]) => n + z.current_occupancy, 0)
+        stats.avgDwellMinutes = visited.length
+          ? Math.round(visited.reduce((n, [, z]) => n + z.avg_dwell_seconds, 0) / visited.length / 6) / 10
+          : 0
+        const top = zs.sort((a, b) => b[1].current_occupancy - a[1].current_occupancy)[0]
+        stats.topZone = top && top[1].current_occupancy > 0 ? top[1].label : '—'
+      }
+      patch.venueStats = stats
+      if (ins.status === 'fulfilled') {
+        const t = Date.parse(ins.value.generated_at) || Date.now()
+        patch.insights = ins.value.insights.map((i, k) => ({
+          id: `INS-${t}-${k}`, type: i.insight_type, deviceId: i.device_id, message: i.message,
+          suggestedAction: i.suggested_action, timestamp: t, acted: false,
+        }))
+        patch.insightsNote = null
+      } else {
+        patch.insights = []
+        patch.insightsNote = 'AI insights unavailable (backend reports disabled or not ready)'
+      }
+      set(patch)
+    },
 
-      connect()
+    enterDemo: () => {
+      const devices = Array.from({ length: 24 }, (_, i) => generateDevice(i + 1))
+      set({
+        connection: 'demo', devices, nodeHealth: NODES.map(generateNode), insightsNote: null,
+        insights: Array.from({ length: 8 }, (_, i) => generateInsight(i)).sort((a, b) => b.timestamp - a.timestamp),
+        venueStats: { totalToday: 312, currentlyActive: devices.length, avgDwellMinutes: 18, topZone: 'VR Zone', conversionEvents: 47 },
+      })
+      startMockUpdates(set, get)
+    },
+
+    // ── WebSocket connection (backend /ws) ────────────────────────────────────
+    connectWebSocket: (url = WS_URL) => {
+      const { wsRef } = get()
+      if (wsRef && wsRef.readyState <= WebSocket.OPEN) return
+      set({ wsStatus: 'reconnecting' })
+
+      let ws
+      try { ws = new WebSocket(url) } catch { ws = null }
+      const lost = () => {
+        stopMockUpdates(); clearInterval(_poll)
+        set({ wsRef: null, wsStatus: 'reconnecting' })
+        if (get().connection === 'connected') {
+          set({ connection: 'offline' })           // keep last real data, flagged stale
+        } else if (get().connection !== 'demo') {
+          get().enterDemo()                        // never reached backend: explicit demo
+        } else {
+          startMockUpdates(set, get)
+        }
+        clearTimeout(_retry)
+        _retry = setTimeout(() => get().connectWebSocket(url), 3000)
+      }
+      if (!ws) return lost()
+      set({ wsRef: ws })
+
+      ws.onopen = () => {
+        stopMockUpdates()
+        // drop demo data so mock values never mix with live ones
+        set({ connection: 'connected', wsStatus: 'connected', devices: [], insights: [], nodeHealth: [], venueStats: EMPTY_STATS })
+        get().refreshFromApi()
+        clearInterval(_poll)
+        _poll = setInterval(() => get().refreshFromApi(), 5000)
+      }
+      ws.onmessage = (event) => {
+        try { handleWsMessage(JSON.parse(event.data), set, get) } catch (e) { console.warn('[FlowTrace WS] Invalid message', e) }
+      }
+      ws.onerror = () => ws.close()
+      ws.onclose = lost
     },
 
     disconnectWebSocket: () => {
+      clearTimeout(_retry); clearInterval(_poll)
       const { wsRef } = get()
-      if (wsRef) {
-        wsRef.close()
-        set({ wsRef: null, wsStatus: 'disconnected' })
-      }
+      if (wsRef) { wsRef.onclose = null; wsRef.close() }
+      set({ wsRef: null, wsStatus: 'disconnected' })
       stopMockUpdates()
     },
   }))

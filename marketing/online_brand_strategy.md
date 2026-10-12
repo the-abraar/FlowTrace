@@ -21,7 +21,7 @@ These are ideal candidates who frequently utilize pop-ups, maker's markets, and 
 
 ## Pitch Strategy for D2C Founders
 - **The Hook (The Blind Spot):** Acknowledge their mastery of online metrics (CAC, bounce rates, heatmaps) and contrast it with the lack of data at physical events.
-- **The Value Prop (Frictionless Analytics):** Emphasize that FlowTrace is invisible. No QR codes, no app downloads, no Wi-Fi logins. It passively tracks BLE signals to provide agentic insights.
+- **The Value Prop (Frictionless Analytics):** Emphasize that FlowTrace is invisible. No QR codes, no app downloads, no Wi-Fi logins for visitors, but only visitors carrying a FlowTrace tag (opt-in) are detected; phones are not tracked (MAC randomization, iOS background limits). It passively tracks tag BLE signals to provide agentic insights.
 - **The "Aha" Moment (A/B Testing Reality):** Explain that with FlowTrace, they can A/B test their physical booth layout on day 1 of a pop-up, and optimize it for day 2—exactly like they optimize a landing page.
 - **The Ask:** A low-friction discovery call tailored around their next planned physical event.
 
@@ -37,7 +37,7 @@ I love what you've built with [Brand Name] online. As a digital-first founder, y
 
 But what happens when you do a physical pop-up or exhibition? Suddenly, you're flying blind. You might know your total sales, but you don't know your "bounce rate" (people who walked in and left immediately) or your "dwell time" (which product display kept people engaged the longest).
 
-FlowTrace changes that. We're **"Google Analytics for the real world."** Using invisible, friction-free tracking (no apps for customers to download), we give you agentic insights into your physical foot traffic—just like your Shopify dashboard.
+FlowTrace changes that. We're **"Google Analytics for the real world."** Using invisible, friction-free tracking (no customer app; only FlowTrace-tagged visitors are detected), we give you agentic insights into your physical foot traffic—just like your Shopify dashboard.
 
 Are you doing any pop-ups or exhibitions this quarter? I’d love to show you a quick 5-minute demo of how FlowTrace can make your next physical event as data-driven as your website.
 

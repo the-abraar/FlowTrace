@@ -40,7 +40,10 @@
 
 // Full URL of the backend ingestion endpoint.
 // The scanner will POST a JSON array of RSSI readings here.
-#define BACKEND_URL               "http://192.168.1.100:8080/api/v1/readings"
+#define BACKEND_URL               "http://192.168.1.100:8000/api/v1/readings"
+// Must equal INGEST_API_KEY on the backend. Replace before deploying.
+#define API_KEY                   "CHANGE_ME"
+
 
 // HTTP POST timeout (milliseconds).
 #define HTTP_TIMEOUT_MS           8000

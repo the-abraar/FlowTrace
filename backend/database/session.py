@@ -6,12 +6,11 @@ Async SQLAlchemy engine + session factory used throughout the application.
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from backend.config import settings
+from config import settings
 
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=False,
-    connect_args={"check_same_thread": False},
 )
 
 AsyncSessionLocal = async_sessionmaker(

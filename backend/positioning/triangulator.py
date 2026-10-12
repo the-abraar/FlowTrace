@@ -20,15 +20,17 @@ Classes
 
 from __future__ import annotations
 
+import json
 import logging
 import math
+import os
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import NamedTuple
 
 import numpy as np
 
-from backend.config import settings
+from config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -233,12 +235,12 @@ def triangulate(anchors: list[NodeAnchor]) -> tuple[float, float, float]:
             2.0 * (anc.y - ref.y),
         ]
         row_b = (
-            anc.distance**2
-            - ref.distance**2
-            - anc.x**2
-            + ref.x**2
-            - anc.y**2
-            + ref.y**2
+            anc.x**2
+            - ref.x**2
+            + anc.y**2
+            - ref.y**2
+            - anc.distance**2
+            + ref.distance**2
         )
         rows_A.append(row_a)
         rows_b.append(row_b)
@@ -294,7 +296,9 @@ class PositionEngine:
         self,
         process_noise: float = 0.1,
         measurement_noise: float = 1.5,
+        bounds: tuple[float, float] | None = None,  # (width, height), origin (0,0)
     ) -> None:
+        self._bounds = bounds
         self._process_noise = process_noise
         self._measurement_noise = measurement_noise
         # device_id → KalmanFilter2D
@@ -342,6 +346,10 @@ class PositionEngine:
         kf = self._get_filter(device_id)
         smooth_x, smooth_y = kf.update(raw_x, raw_y)
 
+        if self._bounds:
+            smooth_x = min(max(smooth_x, 0.0), self._bounds[0])
+            smooth_y = min(max(smooth_y, 0.0), self._bounds[1])
+
         estimate = PositionEstimate(
             x=smooth_x,
             y=smooth_y,
@@ -367,3 +375,56 @@ class PositionEngine:
 
 # Singleton instance shared across the application
 position_engine = PositionEngine()
+
+
+class PositioningFleet:
+    """Per-device, per-node latest-RSSI window feeding a PositionEngine."""
+
+    def __init__(self, window_s: float = 10.0, bounds: tuple[float, float] | None = None,
+                 ttl_s: float | None = None, max_devices: int | None = None, clock=None) -> None:
+        import time
+        self.ttl_s = settings.DEVICE_TTL_SECONDS if ttl_s is None else ttl_s
+        self.max_devices = settings.MAX_TRACKED_DEVICES if max_devices is None else max_devices
+        self._clock = clock or time.time
+        self.rejected = 0
+        self.engine = PositionEngine(bounds=bounds)
+        self.window_s = window_s
+        self._nodes: dict[str, tuple[float, float]] = {}
+        self._rssi: dict[str, dict[str, tuple[int, float]]] = {}
+        # Optional per-node {tx_power, n} from tools/calibrate_rssi.py output.
+        path = os.environ.get("RSSI_CALIBRATION_JSON")
+        self._calib: dict[str, dict] = json.load(open(path)) if path else {}
+
+    def configure_nodes(self, nodes: list[dict]) -> None:
+        self._nodes = {n["node_id"]: (n["x"], n["y"]) for n in nodes}
+
+    def has_capacity(self, device_id: str) -> bool:
+        if device_id in self._rssi or len(self._rssi) < self.max_devices:
+            return True
+        self.rejected += 1
+        if self.rejected == 1 or self.rejected % 1000 == 0:
+            logger.warning("Device cap %d reached: rejected %d new device(s)", self.max_devices, self.rejected)
+        return False
+
+    def evict_idle(self) -> None:
+        """Drop devices whose newest reading is older than ttl_s (called from the position loop)."""
+        now = self._clock()
+        for dev in [d for d, pn in self._rssi.items() if now - max(ts for _, ts in pn.values()) > self.ttl_s]:
+            del self._rssi[dev]
+            self.engine.remove_device(dev)
+
+    def ingest_reading(self, node_id: str, device_id: str, rssi: int, ts: float) -> None:
+        if node_id in self._nodes and self.has_capacity(device_id):
+            self._rssi.setdefault(device_id, {})[node_id] = (rssi, ts)
+
+    def get_all_positions(self) -> dict[str, PositionEstimate | None]:
+        now = self._clock()
+        out = {}
+        for dev, per_node in self._rssi.items():
+            anchors = [
+                NodeAnchor(nid, *self._nodes[nid], rssi_to_distance(r, self._calib.get(nid, {}).get("tx_power"), self._calib.get(nid, {}).get("n")), r)
+                for nid, (r, ts) in per_node.items()
+                if now - ts <= self.window_s
+            ]
+            out[dev] = self.engine.estimate(dev, anchors)
+        return out

@@ -9,7 +9,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=sqlite:///./flowtrace.db
+      - DATABASE_URL=sqlite+aiosqlite:///./flowtrace.db
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - MQTT_BROKER_HOST=mosquitto
       - MQTT_BROKER_PORT=1883

@@ -7,7 +7,7 @@ Hi [First Name],
 
 I know you're constantly looking for ways to optimize operations and increase tenant revenue at [Venue Name]. Most venues try to do this by pushing visitor apps, which rarely get above a 5% adoption rate. 
 
-We built FlowTrace to solve this. It's an invisible indoor tracking system that captures 100% of visitor footfall and dwell times passively using BLE—zero friction for your guests. 
+We built FlowTrace to solve this. It's an invisible indoor tracking system that captures footfall and dwell times for visitors carrying a FlowTrace tag, passively via BLE (it does not detect untagged visitors or phones). 
 
 But instead of giving you another boring data dashboard, FlowTrace includes an "Agentic AI" that actively tells you things like: "Zone C is underutilized on Tuesday afternoons; consider a pop-up stall or targeted promotion."
 

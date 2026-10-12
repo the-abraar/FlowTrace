@@ -14,7 +14,7 @@
 //   Gateway → (HTTP POST)     →  Backend REST API
 //
 // MQTT topic convention:
-//   flowtrace/readings/<NODE_ID>   — scanner publishes JSON batch here
+//   flowtrace/nodes/<NODE_ID>/readings — scanner publishes JSON batch here
 //   flowtrace/status/<GATEWAY_ID>  — gateway publishes its own heartbeat here
 //
 // Libraries required:
@@ -79,6 +79,7 @@ static bool forwardToBackend(const char* payload, size_t len) {
   HTTPClient http;
   http.begin(s_backendUrl);
   http.addHeader("Content-Type", "application/json");
+  http.addHeader("X-API-Key", API_KEY);
   http.addHeader("X-Gateway-ID",  GATEWAY_ID);
   http.addHeader("X-FW-Version",  FW_VERSION);
   http.setTimeout(HTTP_TIMEOUT_MS);

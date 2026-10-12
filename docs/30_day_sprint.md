@@ -464,7 +464,7 @@ Acceptable: Agent correctly uses tools for 8/10 prompts without hallucinating nu
 - Overlay using Leaflet's `imageOverlay`
 
 **Day 19 — Live Position Dots**
-- WebSocket connection to backend: `ws://flowtrace-server:8080/ws/positions`
+- WebSocket connection to backend: `ws://flowtrace-server:8000/ws`
 - Each connected client receives position updates at 2 Hz
 - Render each active tag as a colored dot with tag label
 - Ghost Trail: last 30 position updates drawn as fading polyline
@@ -585,13 +585,13 @@ Start 10 tags simultaneously. Have 5 people each carry 2 tags (simulates max ven
 Monitor:
 ```bash
 # API response time (should be < 200ms p99)
-watch -n 5 'curl -s http://localhost:8080/metrics | grep api_response_p99'
+watch -n 5 'curl -s http://localhost:8000/metrics | grep api_response_p99'
 
 # DB write queue depth (should be < 500)
-watch -n 5 'curl -s http://localhost:8080/metrics | grep db_queue_depth'
+watch -n 5 'curl -s http://localhost:8000/metrics | grep db_queue_depth'
 
 # WebSocket broadcast lag (should be < 500ms)
-watch -n 5 'curl -s http://localhost:8080/metrics | grep ws_broadcast_lag_ms'
+watch -n 5 'curl -s http://localhost:8000/metrics | grep ws_broadcast_lag_ms'
 ```
 
 **Pass criteria:**

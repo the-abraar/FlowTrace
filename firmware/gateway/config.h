@@ -50,8 +50,8 @@
 #define MQTT_CLIENT_ID            "flowtrace-gateway-01"
 
 // Topic pattern the gateway subscribes to.
-// Scanners publish to flowtrace/readings/<NODE_ID>.
-#define MQTT_SUBSCRIBE_TOPIC      "flowtrace/readings/#"
+// Scanners publish to flowtrace/nodes/<NODE_ID>/readings.
+#define MQTT_SUBSCRIBE_TOPIC      "flowtrace/nodes/+/readings"
 
 // QoS level for subscriptions (0 = at-most-once, 1 = at-least-once).
 #define MQTT_QOS                  1
@@ -66,7 +66,10 @@
 // Backend HTTP Forwarding
 // ---------------------------------------------------------------------------
 
-#define BACKEND_URL               "http://192.168.1.100:8080/api/v1/readings"
+#define BACKEND_URL               "http://192.168.1.100:8000/api/v1/readings"
+// Must equal INGEST_API_KEY on the backend. Replace before deploying.
+#define API_KEY                   "CHANGE_ME"
+
 #define HTTP_TIMEOUT_MS           8000
 
 // ---------------------------------------------------------------------------

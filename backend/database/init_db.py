@@ -6,11 +6,11 @@ test BLE scanner nodes arranged around a 10 m × 10 m demo room.
 
 Usage (standalone)::
 
-    python -m backend.database.init_db
+    python -m database.init_db
 
 or called from application startup::
 
-    from backend.database.init_db import init_db
+    from database.init_db import init_db
     await init_db()
 """
 
@@ -23,9 +23,9 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.config import settings
-from backend.database.models import Base, Node
-from backend.database.session import AsyncSessionLocal, engine
+from config import settings
+from database.models import Base, Node
+from database.session import AsyncSessionLocal, engine
 
 logger = logging.getLogger(__name__)
 

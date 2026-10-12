@@ -1,0 +1,7 @@
+# Ruff default rule set, pinned so a user-level config cannot change the result.
+extend-exclude = ["dashboard"]
+[lint]
+select = ["E4", "E7", "E9", "F"]
+
+[lint.per-file-ignores]
+"backend/tests/*" = ["E702"]  # one-line fixtures; style only

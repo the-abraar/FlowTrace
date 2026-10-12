@@ -1,12 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException
+from auth import require_ingest
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime, timezone
 import logging
-from sqlalchemy.orm import Session
-import time
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.session import get_db
+from database.session import get_session
 from database.models import Reading, Node, Device
 # In a real app we'd inject the fleet instance via dependencies. We assume access via app state or import.
 
@@ -15,69 +15,65 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/readings", tags=["Ingestion"])
 
 class ReadingPayload(BaseModel):
-    node_id: str
+    node_id: Optional[str] = None  # may be inherited from the batch (firmware sends it once per batch)
     device_id: str
     rssi: int
     timestamp: Optional[str] = None
     battery_pct: Optional[int] = None
-    _true_x: Optional[float] = None  # for simulation
-    _true_y: Optional[float] = None
+    batt_mv: Optional[int] = None  # firmware field; ts_ms/mac are ignored (device uptime, not wall clock)
 
 class BatchReadingsPayload(BaseModel):
+    node_id: Optional[str] = None
     readings: List[ReadingPayload]
 
-@router.post("")
-async def receive_readings(payload: BatchReadingsPayload, db: Session = Depends(get_db)):
-    """Receive a batch of readings via HTTP POST."""
-    
-    # We will grab the fleet from the app state in main.py but for now just log
-    from main import fleet # Lazy import to avoid circular dependency
-    
-    now = datetime.now(timezone.utc)
-    
-    # Cache to avoid repeated DB lookups in the same batch
-    node_cache = {}
-    device_cache = {}
-    
-    records = []
+async def persist_reading(db, node_id, device_id, rssi, dt, battery_pct=None) -> bool:
+    """Insert one reading; creates the device on first sight. False if node unknown."""
+    if await db.get(Node, node_id) is None:
+        logger.warning("Unknown node ID: %s", node_id)
+        return False
+    device = await db.get(Device, device_id)
+    if device is None:
+        db.add(Device(id=device_id, first_seen=dt, last_seen=dt))
+        await db.flush()
+    else:
+        device.last_seen = dt
+    db.add(Reading(node_id=node_id, device_id=device_id, rssi=rssi, timestamp=dt, battery_pct=battery_pct))
+    await db.flush()
+    return True
+
+
+def parse_readings(data) -> list[tuple]:
+    """Scanner batch ({node_id, readings:[...]}) or one flat reading -> [(node_id, device_id, rssi, dt, battery_pct)].
+    Raises ValueError (pydantic's is one) on bad shape or missing node_id."""
+    if isinstance(data, dict) and "readings" not in data:
+        data = {"readings": [data]}
+    payload = BatchReadingsPayload.model_validate(data)
+    out = []
     for r in payload.readings:
-        # Pass to fleet for real-time positioning
-        ts = datetime.fromisoformat(r.timestamp.replace('Z', '+00:00')).timestamp() if r.timestamp else time.time()
-        if fleet:
-            fleet.ingest_reading(r.node_id, r.device_id, r.rssi, ts)
-            
-        # DB persistence logic
-        node_id_str = r.node_id
-        if node_id_str not in node_cache:
-            node = db.query(Node).filter(Node.node_id == node_id_str).first()
-            if node:
-                node_cache[node_id_str] = node.id
-            else:
-                continue # Unknown node
-                
-        device_id_str = r.device_id
-        if device_id_str not in device_cache:
-            device = db.query(Device).filter(Device.device_id == device_id_str).first()
-            if not device:
-                device = Device(device_id=device_id_str, first_seen=now, last_seen=now)
-                db.add(device)
-                db.commit()
-                db.refresh(device)
-            else:
-                device.last_seen = now
-            device_cache[device_id_str] = device.id
-            
-        dt = datetime.fromisoformat(r.timestamp.replace('Z', '+00:00')) if r.timestamp else now
-        records.append(Reading(
-            node_id=node_cache[node_id_str],
-            device_id=device_cache[device_id_str],
-            rssi=r.rssi,
-            timestamp=dt,
-            battery_pct=r.battery_pct
-        ))
-        
-    if records:
-        db.add_all(records)
-        db.commit()
-        
-    return {"status": "ok", "inserted": len(records)}
+        node_id = r.node_id or payload.node_id
+        if not node_id:
+            raise ValueError("node_id missing (per reading or per batch)")
+        dt = datetime.fromisoformat(r.timestamp.replace("Z", "+00:00")) if r.timestamp else datetime.now(timezone.utc)
+        out.append((node_id, r.device_id, r.rssi, dt, r.battery_pct))
+    return out
+
+
+@router.post("", dependencies=[Depends(require_ingest)])
+async def receive_readings(payload: BatchReadingsPayload, db: AsyncSession = Depends(get_session)):
+    """Receive a batch of readings via HTTP POST."""
+    from main import fleet  # lazy: avoids circular import
+
+    try:
+        rows = parse_readings(payload.model_dump())
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+    inserted, unknown = 0, set()
+    for node_id, device_id, rssi, dt, batt in rows:
+        if not fleet.has_capacity(device_id):  # device cap: no Device row either
+            continue
+        if await persist_reading(db, node_id, device_id, rssi, dt, batt):
+            fleet.ingest_reading(node_id, device_id, rssi, dt.timestamp())
+            inserted += 1
+        else:
+            unknown.add(node_id)
+    return {"status": "partial" if unknown else "ok", "inserted": inserted, "unknown_nodes": sorted(unknown)}

@@ -1,0 +1,6 @@
+# Optional: LLM agent (backend/agent). Install after requirements.txt.
+-r requirements.txt
+langchain==0.3.9
+langchain-openai==0.2.11
+langchain-community==0.3.9
+openai==1.57.0

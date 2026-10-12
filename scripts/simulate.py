@@ -124,7 +124,7 @@ async def post_readings(client: httpx.AsyncClient, server: str, readings: list[d
 
 async def run_simulation(server: str, num_users: int, duration: int):
     """Main simulation loop."""
-    print(f"🟢 FlowTrace Simulator starting")
+    print("🟢 FlowTrace Simulator starting")
     print(f"   Server: {server}")
     print(f"   Users:  {num_users}")
     print(f"   Duration: {duration}s")

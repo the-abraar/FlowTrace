@@ -325,6 +325,7 @@ static bool uploadReadings() {
   HTTPClient http;
   http.begin(BACKEND_URL);
   http.addHeader("Content-Type", "application/json");
+  http.addHeader("X-API-Key", API_KEY);
   http.setTimeout(HTTP_TIMEOUT_MS);
 
   int httpCode = http.POST(body);

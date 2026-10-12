@@ -1,6 +1,6 @@
 # FlowTrace: The Invisible Engine for Venue Analytics & Growth
 
-**Turn Foot Traffic into Actionable Growth—No Apps, No Friction.**
+**Turn Foot Traffic into Actionable Growth—No Customer App Needed (FlowTrace tags required).**
 
 Welcome to FlowTrace, the first end-to-end passive tracking and agentic analytics platform designed specifically for physical retail spaces, malls, and entertainment zones in Bangladesh (like Bashundhara Group / Togi Fun World). 
 
@@ -13,7 +13,7 @@ But data without direction is just noise. That's where our **Agentic Analytics E
 ### Core Features
 
 #### 📡 Passive Tracking (Zero Friction)
-No apps to download. No QR codes to scan. FlowTrace's advanced BLE sensors map customer journeys passively. Understand dwell times, popular zones, and bottleneck areas with 100% frictionless tracking.
+No app to download. FlowTrace BLE sensors detect visitors carrying a FlowTrace tag and map their journeys passively (phones are not tracked). Understand dwell times, popular zones, and bottleneck areas with low-friction tracking of tagged visitors.
 
 #### 🧠 Agentic AI Insights
 Tired of staring at charts? FlowTrace's AI acts as your dedicated business strategist. It automatically spots anomalies, predicts peak times, and recommends layout changes or targeted promotions based on real-time footfall patterns.

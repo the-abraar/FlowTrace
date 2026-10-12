@@ -3,8 +3,9 @@ import LiveMap from './components/LiveMap'
 import StatsBar from './components/StatsBar'
 import NodeHealth from './components/NodeHealth'
 import InsightPanel from './components/InsightPanel'
+import ConnectionBanner from './components/ConnectionBanner'
 import PopUpDashboard from './components/PopUpDashboard'
-import useWebSocket from './hooks/useWebSocket'
+import { useWebSocket } from './hooks/useWebSocket'
 import './index.css'
 
 function App() {
@@ -12,6 +13,8 @@ function App() {
   const [isPopUpMode, setIsPopUpMode] = useState(true);
 
   return (
+    <>
+    <ConnectionBanner />
     <div className="min-h-screen bg-neutral-900 text-white p-6 flex flex-col gap-6 font-sans">
       <header className="flex justify-between items-center border-b border-neutral-800 pb-4">
         <div>
@@ -54,6 +57,7 @@ function App() {
         </div>
       </div>
     </div>
+    </>
   )
 }
 

@@ -13,8 +13,6 @@ import json
 import logging
 import time
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Optional
 
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain.tools import tool
@@ -340,7 +338,7 @@ Output JSON with: insight_type="GREETING", title, message, suggested_action, con
         try:
             result = self.executor.invoke({"input": prompt})
             return self._parse_insight(result.get("output", ""), device_id)
-        except Exception as e:
+        except Exception:
             return InsightReport(
                 device_id=device_id,
                 insight_type="GREETING",

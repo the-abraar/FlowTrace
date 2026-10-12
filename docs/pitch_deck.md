@@ -10,7 +10,7 @@
 
 **Slide 3: The Solution - Passive Tracking**
 *   **Our Approach:** "The user just walks; the system does the thinking."
-*   **No Friction:** No apps to download, no QR codes to scan. We use hidden ESP32 nodes and passive BLE wristbands (or existing smartphone BLE signals).
+*   **Low Friction:** No QR codes to scan and no Wi-Fi logins. Hidden ESP32 nodes detect only FlowTrace tags carried by opt-in visitors. Phones are not tracked: MAC randomization and iOS background limits make them unreliable.
 
 **Slide 4: How It Works (The 3 Pillars)**
 1.  **Sense:** Invisible BLE nodes triangulate position via signal strength (RSSI).
