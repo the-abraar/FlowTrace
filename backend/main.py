@@ -8,6 +8,8 @@ from config import settings
 from auth import require_read, ws_allowed, warn_if_open
 
 from database.init_db import init_db, SEED_NODES
+from database.retention import purge_stale_devices
+from database.session import AsyncSessionLocal
 from positioning.triangulator import PositioningFleet
 from positioning.zone_detector import ZoneDetector
 from ingestion.mqtt_server import MQTTServer
@@ -46,6 +48,7 @@ async def lifespan(app: FastAPI):
     
     # Background task for position engine
     task = asyncio.create_task(position_loop())
+    purge_task = asyncio.create_task(purge_loop())
     global insights
     insights = build_service(settings.OPENAI_API_KEY, zone_analytics, settings.OPENAI_MODEL)
     insights.start()
@@ -55,6 +58,7 @@ async def lifespan(app: FastAPI):
     # Shutdown
     logger.info("Shutting down FlowTrace Backend...")
     task.cancel()
+    purge_task.cancel()
     insights.stop()
     if mqtt_server:
         mqtt_server.stop()
@@ -84,6 +88,18 @@ async def position_loop():
             logger.error(f"Error in position loop: {e}")
             
         await asyncio.sleep(2.0)
+
+async def purge_loop():
+    while True:
+        try:
+            async with AsyncSessionLocal() as db:
+                n = await purge_stale_devices(db, settings.DEVICE_RETENTION_DAYS)
+                await db.commit()
+            if n:
+                logger.info("Purged %d device(s) unseen for %s days", n, settings.DEVICE_RETENTION_DAYS)
+        except Exception:
+            logger.exception("Device purge failed")
+        await asyncio.sleep(3600)
 
 app = FastAPI(title="FlowTrace Backend API", lifespan=lifespan)
 

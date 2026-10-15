@@ -21,7 +21,7 @@ def test_ingest_to_position():
         assert r.json()["unknown_nodes"] == ["nope"] and r.json()["inserted"] == 0
 
         msg = ws.receive_json()  # position loop ticks every 2 s
-        pos = msg["data"][0]
-        assert msg["type"] == "positions" and pos["device_id"] == "TAG_1"
+        pos = next(p for p in msg["data"] if p["device_id"] == "TAG_1")  # other test modules may share the fleet
+        assert msg["type"] == "positions"
         assert abs(pos["x"] - 3) < 2 and abs(pos["y"] - 3) < 2  # tag simulated at (3,3)
         assert c.get("/api/v1/devices").status_code == 200

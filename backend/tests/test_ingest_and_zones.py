@@ -18,12 +18,19 @@ def test_http_edge_cases():
         r = c.post("/api/v1/readings", json={"readings": [
             {"node_id": "ghost", "device_id": "T", "rssi": -60},
             {"node_id": "node-SW", "device_id": "T", "rssi": -60}]}).json()
-        assert r == {"status": "partial", "inserted": 1, "unknown_nodes": ["ghost"]}
-        # duplicate batch: no dedupe today, both inserted and nothing crashes (documents behaviour)
-        b = {"node_id": "node-SW", "readings": [{"device_id": "D", "rssi": -50, "timestamp": "2026-01-01T00:00:00Z"}]}
-        assert c.post("/api/v1/readings", json=b).json()["inserted"] == 1
-        assert c.post("/api/v1/readings", json=b).json()["inserted"] == 1
-        assert [d["id"] for d in c.get("/api/v1/devices").json()].count("D") == 1  # device row not duplicated
+        assert r == {"status": "partial", "inserted": 1, "duplicates": 0, "unknown_nodes": ["ghost"]}
+        # retried batch: (node, device, ts_ms) already stored -> counted as duplicates, not inserted again
+        b = {"node_id": "node-SW", "readings": [{"device_id": "DUP", "rssi": -50, "ts_ms": 7}, {"device_id": "DUP", "rssi": -51, "ts_ms": 8}]}
+        assert c.post("/api/v1/readings", json=b).json() == {"status": "ok", "inserted": 2, "duplicates": 0, "unknown_nodes": []}
+        assert c.post("/api/v1/readings", json=b).json() == {"status": "ok", "inserted": 0, "duplicates": 2, "unknown_nodes": []}
+        other = {"node_id": "node-SE", "readings": [{"device_id": "DUP", "rssi": -50, "ts_ms": 7}]}  # same ts_ms, other node
+        assert c.post("/api/v1/readings", json=other).json()["inserted"] == 1
+        no_ts = {"node_id": "node-SW", "readings": [{"device_id": "DUP", "rssi": -50}]}  # no node timestamp: no dedupe key
+        assert c.post("/api/v1/readings", json=no_ts).json()["inserted"] == 1
+        assert c.post("/api/v1/readings", json=no_ts).json()["inserted"] == 1
+        sw = [x for x in c.get("/api/v1/nodes/node-SW/readings").json() if x["device_id"] == "DUP"]
+        assert sorted(x["rssi"] for x in sw) == [-51, -50, -50, -50]
+        assert [d["id"] for d in c.get("/api/v1/devices").json()].count("DUP") == 1  # device row not duplicated
 
 
 def test_zone_detector_two_zones():

@@ -277,6 +277,15 @@ def triangulate(anchors: list[NodeAnchor]) -> tuple[float, float, float]:
     return x_est, y_est, confidence
 
 
+def load_calibration() -> dict[str, dict]:
+    """Per-node {tx_power, n} from tools/calibrate_rssi.py output at $RSSI_CALIBRATION_JSON; {} if unset."""
+    path = os.environ.get("RSSI_CALIBRATION_JSON")
+    if not path:
+        return {}
+    with open(path) as f:
+        return json.load(f)
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Position Engine
 # ──────────────────────────────────────────────────────────────────────────────
@@ -297,14 +306,21 @@ class PositionEngine:
         process_noise: float = 0.1,
         measurement_noise: float = 1.5,
         bounds: tuple[float, float] | None = None,  # (width, height), origin (0,0)
+        calibration: dict[str, dict] | None = None,  # None: load from $RSSI_CALIBRATION_JSON
     ) -> None:
         self._bounds = bounds
+        self.calibration = load_calibration() if calibration is None else calibration
         self._process_noise = process_noise
         self._measurement_noise = measurement_noise
         # device_id → KalmanFilter2D
         self._filters: dict[str, KalmanFilter2D] = {}
         # device_id → last PositionEstimate
         self._last_estimates: dict[str, PositionEstimate] = {}
+
+    def distance(self, node_id: str, rssi: int) -> float:
+        """RSSI -> metres with this node's calibrated tx_power/n, falling back to settings."""
+        c = self.calibration.get(node_id, {})
+        return rssi_to_distance(rssi, c.get("tx_power"), c.get("n"))
 
     def _get_filter(self, device_id: str) -> KalmanFilter2D:
         if device_id not in self._filters:
@@ -391,9 +407,6 @@ class PositioningFleet:
         self.window_s = window_s
         self._nodes: dict[str, tuple[float, float]] = {}
         self._rssi: dict[str, dict[str, tuple[int, float]]] = {}
-        # Optional per-node {tx_power, n} from tools/calibrate_rssi.py output.
-        path = os.environ.get("RSSI_CALIBRATION_JSON")
-        self._calib: dict[str, dict] = json.load(open(path)) if path else {}
 
     def configure_nodes(self, nodes: list[dict]) -> None:
         self._nodes = {n["node_id"]: (n["x"], n["y"]) for n in nodes}
@@ -422,7 +435,7 @@ class PositioningFleet:
         out = {}
         for dev, per_node in self._rssi.items():
             anchors = [
-                NodeAnchor(nid, *self._nodes[nid], rssi_to_distance(r, self._calib.get(nid, {}).get("tx_power"), self._calib.get(nid, {}).get("n")), r)
+                NodeAnchor(nid, *self._nodes[nid], self.engine.distance(nid, r), r)
                 for nid, (r, ts) in per_node.items()
                 if now - ts <= self.window_s
             ]

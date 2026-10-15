@@ -69,6 +69,7 @@ class Settings(BaseSettings):
     # ── Tracking limits ──────────────────────────────────────────────────────
     DEVICE_TTL_SECONDS: float = Field(default=600.0, description="Evict tracked devices idle longer than this")
     MAX_TRACKED_DEVICES: int = Field(default=5000, description="Reject new devices beyond this many")
+    DEVICE_RETENTION_DAYS: float = Field(default=30.0, description="Delete Device rows (and their readings) unseen this long")
 
     # ── Logging ───────────────────────────────────────────────────────────────
     LOG_LEVEL: str = Field(default="INFO")

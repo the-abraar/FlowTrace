@@ -20,6 +20,7 @@ from typing import Any
 
 from sqlalchemy import (
     JSON,
+    BigInteger,
     Boolean,
     DateTime,
     Float,
@@ -27,6 +28,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
     func,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -164,9 +166,12 @@ class Reading(Base):
     rssi        : Received signal strength in dBm (negative integer)
     timestamp   : When the measurement was taken (UTC)
     battery_pct : Optional node battery percentage [0–100]
+    ts_ms       : Node's capture time (firmware millis()); with node_id and device_id it is the dedupe key
     """
 
     __tablename__ = "readings"
+    # NULL ts_ms (no node timestamp) never collides, so such readings are not deduped
+    __table_args__ = (UniqueConstraint("node_id", "device_id", "ts_ms", name="uq_reading_node_device_ts"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     node_id: Mapped[str] = mapped_column(
@@ -180,6 +185,7 @@ class Reading(Base):
         DateTime(timezone=True), nullable=False, default=datetime.utcnow, index=True
     )
     battery_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
+    ts_ms: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
 
     node: Mapped["Node"] = relationship("Node", back_populates="readings")
     device: Mapped["Device"] = relationship("Device", back_populates="readings")

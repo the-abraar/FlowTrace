@@ -16,7 +16,7 @@ class MQTTServer:
         self.broker_port = broker_port
         self.fleet = fleet
         self.loop = None
-        self.client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="aura_backend", protocol=mqtt.MQTTv311)
+        self.client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=settings.MQTT_CLIENT_ID, protocol=mqtt.MQTTv311)
         if settings.MQTT_USERNAME:
             self.client.username_pw_set(settings.MQTT_USERNAME, settings.MQTT_PASSWORD or None)
         self.client.on_connect = self.on_connect
@@ -61,7 +61,7 @@ class MQTTServer:
                 return
         if self.fleet:
             rows = [r for r in rows if self.fleet.has_capacity(r[1])] if hasattr(self.fleet, "has_capacity") else rows
-            for node_id, device_id, rssi, dt, _ in rows:
+            for node_id, device_id, rssi, dt, *_ in rows:
                 self.fleet.ingest_reading(node_id, device_id, rssi, dt.timestamp())
         if self.loop:  # paho runs in its own thread; DB is async on the app loop
             asyncio.run_coroutine_threadsafe(self._persist(rows), self.loop)
@@ -69,9 +69,9 @@ class MQTTServer:
     async def _persist(self, rows):
         unknown = set()
         async with AsyncSessionLocal() as db:
-            for node_id, device_id, rssi, dt, batt in rows:
-                if not await persist_reading(db, node_id, device_id, rssi, dt, batt):
-                    unknown.add(node_id)
+            for row in rows:
+                if await persist_reading(db, *row) == "unknown":
+                    unknown.add(row[0])
             await db.commit()
         if unknown:
             logger.warning("Dropped readings from unknown nodes: %s", sorted(unknown))

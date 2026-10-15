@@ -82,8 +82,12 @@ function generateInsight(index) {
 const WS_URL = 'ws://localhost:8000/ws'
 const EMPTY_STATS = { totalToday: 0, currentlyActive: 0, avgDwellMinutes: 0, topZone: '—', conversionEvents: null }
 
+// Backend READ_API_KEY, if set. It ships in the JS bundle, so it only keeps out people who cannot load the dashboard.
+const READ_KEY = import.meta.env.VITE_READ_API_KEY || ''
+const withKey = (url) => (READ_KEY ? `${url}${url.includes('?') ? '&' : '?'}key=${encodeURIComponent(READ_KEY)}` : url)
+
 async function api(path) {
-  const res = await fetch(`/api/v1${path}`)
+  const res = await fetch(`/api/v1${path}`, READ_KEY ? { headers: { 'X-API-Key': READ_KEY } } : undefined)
   if (!res.ok) throw new Error(`${res.status} ${path}`)
   return res.json()
 }
@@ -188,7 +192,7 @@ export const useFlowTraceStore = create(
       set({ wsStatus: 'reconnecting' })
 
       let ws
-      try { ws = new WebSocket(url) } catch { ws = null }
+      try { ws = new WebSocket(withKey(url)) } catch { ws = null }  // browsers cannot set WS headers: ?key=
       const lost = () => {
         stopMockUpdates(); clearInterval(_poll)
         set({ wsRef: null, wsStatus: 'reconnecting' })

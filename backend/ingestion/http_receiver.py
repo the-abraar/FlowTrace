@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime, timezone
 import logging
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.session import get_session
@@ -20,30 +21,33 @@ class ReadingPayload(BaseModel):
     rssi: int
     timestamp: Optional[str] = None
     battery_pct: Optional[int] = None
-    batt_mv: Optional[int] = None  # firmware field; ts_ms/mac are ignored (device uptime, not wall clock)
+    batt_mv: Optional[int] = None  # firmware field; mac is ignored
+    ts_ms: Optional[int] = None  # node uptime (millis()), not wall clock: used only as the dedupe key
 
 class BatchReadingsPayload(BaseModel):
     node_id: Optional[str] = None
     readings: List[ReadingPayload]
 
-async def persist_reading(db, node_id, device_id, rssi, dt, battery_pct=None) -> bool:
-    """Insert one reading; creates the device on first sight. False if node unknown."""
+async def persist_reading(db, node_id, device_id, rssi, dt, battery_pct=None, ts_ms=None) -> str:
+    """Insert one reading; creates the device on first sight. Returns "ok", "duplicate" (same node, device, ts_ms
+    already stored: a retried batch) or "unknown" (node not registered)."""
     if await db.get(Node, node_id) is None:
         logger.warning("Unknown node ID: %s", node_id)
-        return False
+        return "unknown"
     device = await db.get(Device, device_id)
     if device is None:
         db.add(Device(id=device_id, first_seen=dt, last_seen=dt))
         await db.flush()
     else:
         device.last_seen = dt
-    db.add(Reading(node_id=node_id, device_id=device_id, rssi=rssi, timestamp=dt, battery_pct=battery_pct))
-    await db.flush()
-    return True
+    # shortcut: SQLite-only upsert (the only driver in requirements); use the postgresql dialect's insert if that changes
+    res = await db.execute(sqlite_insert(Reading).values(node_id=node_id, device_id=device_id, rssi=rssi, timestamp=dt,
+                                                         battery_pct=battery_pct, ts_ms=ts_ms).on_conflict_do_nothing())
+    return "ok" if res.rowcount else "duplicate"
 
 
 def parse_readings(data) -> list[tuple]:
-    """Scanner batch ({node_id, readings:[...]}) or one flat reading -> [(node_id, device_id, rssi, dt, battery_pct)].
+    """Scanner batch ({node_id, readings:[...]}) or one flat reading -> [(node_id, device_id, rssi, dt, battery_pct, ts_ms)].
     Raises ValueError (pydantic's is one) on bad shape or missing node_id."""
     if isinstance(data, dict) and "readings" not in data:
         data = {"readings": [data]}
@@ -54,7 +58,7 @@ def parse_readings(data) -> list[tuple]:
         if not node_id:
             raise ValueError("node_id missing (per reading or per batch)")
         dt = datetime.fromisoformat(r.timestamp.replace("Z", "+00:00")) if r.timestamp else datetime.now(timezone.utc)
-        out.append((node_id, r.device_id, r.rssi, dt, r.battery_pct))
+        out.append((node_id, r.device_id, r.rssi, dt, r.battery_pct, r.ts_ms))
     return out
 
 
@@ -67,13 +71,17 @@ async def receive_readings(payload: BatchReadingsPayload, db: AsyncSession = Dep
         rows = parse_readings(payload.model_dump())
     except ValueError as e:
         raise HTTPException(422, str(e))
-    inserted, unknown = 0, set()
-    for node_id, device_id, rssi, dt, batt in rows:
+    inserted, duplicates, unknown = 0, 0, set()
+    for node_id, device_id, rssi, dt, batt, ts_ms in rows:
         if not fleet.has_capacity(device_id):  # device cap: no Device row either
             continue
-        if await persist_reading(db, node_id, device_id, rssi, dt, batt):
+        status = await persist_reading(db, node_id, device_id, rssi, dt, batt, ts_ms)
+        if status == "ok":
             fleet.ingest_reading(node_id, device_id, rssi, dt.timestamp())
             inserted += 1
+        elif status == "duplicate":
+            duplicates += 1
         else:
             unknown.add(node_id)
-    return {"status": "partial" if unknown else "ok", "inserted": inserted, "unknown_nodes": sorted(unknown)}
+    return {"status": "partial" if unknown else "ok", "inserted": inserted, "duplicates": duplicates,
+            "unknown_nodes": sorted(unknown)}

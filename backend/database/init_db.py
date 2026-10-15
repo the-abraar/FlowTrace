@@ -20,7 +20,7 @@ import asyncio
 import logging
 from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import inspect, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import settings
@@ -73,6 +73,13 @@ async def _seed_nodes(session: AsyncSession) -> None:
     await session.commit()
 
 
+def _add_reading_dedupe_key(conn) -> None:
+    """DBs created before dedupe lack readings.ts_ms; create_all never alters an existing table."""
+    if "ts_ms" not in {c["name"] for c in inspect(conn).get_columns("readings")}:
+        conn.exec_driver_sql("ALTER TABLE readings ADD COLUMN ts_ms BIGINT")
+        conn.exec_driver_sql("CREATE UNIQUE INDEX uq_reading_node_device_ts ON readings (node_id, device_id, ts_ms)")
+
+
 async def init_db() -> None:
     """
     Create all database tables and seed demo data.
@@ -85,6 +92,7 @@ async def init_db() -> None:
     # Create tables
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(_add_reading_dedupe_key)
     logger.info("All tables created / verified.")
 
     # Seed nodes

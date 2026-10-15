@@ -21,7 +21,7 @@ The tools below were validated only on synthetic data (`tools/tests`).
 ```
 python tools/calibrate_rssi.py calib_points.csv -o calibration.json
 python tools/evaluate_accuracy.py eval_points.csv --calibration calibration.json
-RSSI_CALIBRATION_JSON=calibration.json   # backend loads per-node params (PositioningFleet)
+RSSI_CALIBRATION_JSON=calibration.json   # backend loads per-node params (every PositionEngine, incl. the fleet's and module-level position_engine)
 ```
 Report median, p90, max error and per-zone misclassification, separately per condition and per orientation. Also report `rmse_db` and `n_used/n_total` from calibration (large rejection = unreliable environment).
 
@@ -37,4 +37,3 @@ State the venue, node count, conditions and N in any published figure. If crowde
 
 ## TODO
 - Kalman-smoothed (time-series) evaluation: current evaluator uses one median fix per point.
-- Per-node params are used by `PositioningFleet`; the module-level `position_engine` still uses global settings.
