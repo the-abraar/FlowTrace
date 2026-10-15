@@ -406,3 +406,15 @@ This is a 30-day demo project that has not passed its own Day-11 milestone ("Bac
 
 **Not verified:** the GitHub CI workflows have never run; the pre-commit hook has never blocked a real commit; no real-device, real-user or real-host testing.
 **Next, first:** buy nodes, compile and flash firmware with `API_KEY` and `INGEST_API_KEY` set, run the field protocol; decide ONE product (Update 8).
+
+### Update 10 (2026-10-15, agent round)
+
+**Done (code items 4 and 7 of "What to do next"; commit 7907155):**
+- **MQTT, run for real:** the compose stack already had `eclipse-mosquitto:2.0`. New opt-in test `backend/tests/test_mqtt_broker_e2e.py` (`MQTT_E2E_BROKER=localhost:1883`) starts the backend in-process, publishes a firmware-shaped batch to the compose broker, and finds it stored exactly once: passed. Also ran the compose `mosquitto` + `backend` containers (backend on host port 8010, because 8000 was taken): the container connected to `mosquitto:1883`, and 3 publishes of one batch gave 1 stored row. check.sh skips the broker test (no broker in CI).
+- **Dedupe:** readings store the node's `ts_ms`; unique (node, device, `ts_ms`); a retried batch returns `duplicates: N`. Readings without `ts_ms` are not deduped. `init_db` upgrades older DBs (checked on a hand-made old table).
+- **Dashboard read key:** `VITE_READ_API_KEY` is sent as `X-API-Key` and as `?key=` on `/ws`. The key ships in the JS bundle. Build passes; not run in a browser.
+- **Calibration:** `PositionEngine` loads `RSSI_CALIBRATION_JSON`, so the module-level `position_engine` uses it too (it is still unused by app code).
+- **Purge:** Device rows unseen for `DEVICE_RETENTION_DAYS` (30) are deleted hourly with their readings, positions and sessions.
+- **Test bug found:** in reverse order the backend tests wrote to the real `backend/flowtrace.db`. Fixed in conftest. That local DB may contain test rows.
+
+**Still open:** the compose `dashboard` service has no Dockerfile, so a plain `docker compose up` fails; `ts_ms` resets on node reboot (rare false duplicate); upsert is SQLite-only; `dashboard/src/hooks/useFlowTraceData.js` is unused and sends no key. All Update 8 "You" items remain.
