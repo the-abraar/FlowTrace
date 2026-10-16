@@ -63,7 +63,7 @@ FlowTrace is a passive, friction-free system that:
 ## Quick Start
 
 ### Prerequisites
-- Python 3.11+
+- Python 3.11 or 3.12 (on 3.14, `scipy` has no wheel and the install fails)
 - Node.js 20+
 - Arduino IDE 2.x (for firmware)
 - ESP32 boards ×3 minimum (scanner nodes)
@@ -73,14 +73,16 @@ FlowTrace is a passive, friction-free system that:
 
 ```bash
 cd backend
-python -m venv .venv
+python3.11 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements.txt   # optional LLM agent: pip install -r requirements-agent.txt
 cp .env.example .env
-# Edit .env with your OPENAI_API_KEY
-python init_db.py
-python run.py
+# Set INGEST_API_KEY (writes are refused without it unless DEBUG=1); OPENAI_API_KEY only for the agent
+python run.py                     # tables are created on startup; API on :8000
+pytest tests
 ```
+
+Auth keys, MQTT, device retention and dedupe are described in [`backend/README.md`](backend/README.md).
 
 ### 2. Dashboard
 
