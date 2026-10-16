@@ -9,7 +9,7 @@ from auth import require_read, ws_allowed, warn_if_open
 
 from database.init_db import init_db, SEED_NODES
 from database.retention import purge_stale_devices
-from database.session import AsyncSessionLocal
+from database.session import AsyncSessionLocal, engine
 from positioning.triangulator import PositioningFleet
 from positioning.zone_detector import ZoneDetector
 from ingestion.mqtt_server import MQTTServer
@@ -62,6 +62,10 @@ async def lifespan(app: FastAPI):
     insights.stop()
     if mqtt_server:
         mqtt_server.stop()
+    # Let cancelled loops finish their DB calls, then close pooled connections: an aiosqlite connection reused
+    # after its event loop closed is the suspected cause of the CI hang in TestClient shutdown (test_insights, 2026-10-16).
+    await asyncio.gather(task, purge_task, return_exceptions=True)
+    await engine.dispose()
 
 async def position_loop():
     while True:
