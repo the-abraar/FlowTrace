@@ -418,3 +418,11 @@ This is a 30-day demo project that has not passed its own Day-11 milestone ("Bac
 - **Test bug found:** in reverse order the backend tests wrote to the real `backend/flowtrace.db`. Fixed in conftest. That local DB may contain test rows.
 
 **Still open:** the compose `dashboard` service has no Dockerfile, so a plain `docker compose up` fails; `ts_ms` resets on node reboot (rare false duplicate); upsert is SQLite-only; `dashboard/src/hooks/useFlowTraceData.js` is unused and sends no key. All Update 8 "You" items remain.
+
+### Update 11 (2026-10-16, agent round)
+
+- **CI hang:** the last two `check` runs never finished (one held the runner 3 h 49 min before I cancelled it). The log stops at "backend tests"; the same suite passes here in 3 s in both orders, so the cause is CI-only and still unknown. The likely spot is `tests/test_e2e.py`, whose `ws.receive_json()` has no timeout and waits for a broadcast that only comes once the fleet holds a position. Changes: that test now waits at most 10 s for TAG_1's position and fails with what the fleet holds; `backend/pytest.ini` sets `faulthandler_timeout = 60` (any blocked test dumps every thread's stack); the workflow job has `timeout-minutes: 20`. The next CI run should either pass or show where it blocks. Pushing the workflow file needs a token with the `workflow` scope.
+- **Docker:** `dashboard/Dockerfile` added (Node build, nginx on :3000; `VITE_READ_API_KEY` is a build arg, since Vite bakes it in) plus `.dockerignore`; compose passes `READ_API_KEY` as that arg and drops the unused runtime `VITE_API_URL`. Not built: Docker Desktop did not start on this Mac. `npm run build` passes.
+- Deleted the unused `dashboard/src/hooks/useFlowTraceData.js` (Update 10 "Still open").
+- Proof: `scripts/check.sh` passes all 9 steps locally.
+
