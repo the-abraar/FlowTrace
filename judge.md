@@ -426,3 +426,21 @@ This is a 30-day demo project that has not passed its own Day-11 milestone ("Bac
 - Deleted the unused `dashboard/src/hooks/useFlowTraceData.js` (Update 10 "Still open").
 - Proof: `scripts/check.sh` passes all 9 steps locally.
 
+
+### Update 12 (2026-10-16, agent round)
+
+**Done:**
+- **Update 11 work reviewed and committed** (8808cab hang guard, 2da4c12 hook deletion, 0694151 Docker, ceafb1f judge). Fixed in review: the dashboard image's nginx did not proxy `/api/`, so every REST call got `index.html`; it now proxies `/api/` to the compose `backend` service. Compose also now passes `INGEST_API_KEY`/`READ_API_KEY` to the backend (without them every write was refused) and puts the SQLite file on the `flowtrace-db` volume (it was at `./flowtrace.db`, outside the volume, so data was lost on every rebuild). New `backend/.dockerignore` keeps the local `*.db` and `.env` out of the image. The workflow `timeout-minutes` change is its own commit after this one (pushing it needs a token with the `workflow` scope).
+- **Dedupe on Postgres** (585457a): `persist_reading` picks the sqlite or postgresql `INSERT ... ON CONFLICT DO NOTHING` by the session's dialect; other dialects raise `NotImplementedError`. `asyncpg` is not in `requirements.txt` (install it to use Postgres). Proof: new `tests/test_dedupe_postgres.py` passed against a `postgres:16-alpine` container (`PG_TEST_URL=...`): same (node, device, `ts_ms`) gives "duplicate", new `ts_ms` and missing `ts_ms` give "ok". `init_db` also ran clean on that server. check.sh skips the live half (no Postgres in CI).
+- **Docker:** `docker compose build` and `up` work (mosquitto, backend, dashboard). Through `localhost:3000`, `/api/v1/nodes` returns JSON and the DB file is in `/app/data`. On this Mac, pulls hang on the Docker Desktop credential helper (`credsStore: desktop`); building with a temporary `DOCKER_CONFIG` holding `{}` works.
+- **Browser test** (headless Chrome via playwright-core, backend fed by a script posting readings from 4 nodes): found and fixed two real bugs.
+  - 0b40829: `InsightPanel` called `require('react')`, which does not exist in ES modules, so React unmounted the whole app: **the dashboard has rendered a blank page, live and demo**, since that code was written. Earlier "build passes" claims did not catch it. The empty insights list now also shows why insights are missing (503: disabled) instead of "waiting for agent engine".
+  - b278fa8: after losing a live backend the banner said OFFLINE, but the next failed retry switched to DEMO and replaced real data with mock data within ~3 s. It now stays OFFLINE with the stale real data, and returns to live when the backend comes back (both checked in the browser).
+  - Checked working: live stats, node list and device dots from real readings; DEMO banner when the backend never answered; 503 on `/insights` without `OPENAI_API_KEY` (expected).
+- Proof: `scripts/check.sh` passes all 9 steps.
+
+**Not fixed / not verified:**
+- The live map draws a hardcoded layout (zones "VR Zone/Laser Tag/Food Court/Lobby/Exit", nodes NODE-01..06) that does not match the backend's 9 seeded nodes or its zones (e.g. "Laser Tag Arena", "Entrance"). Device dots are real positions; the floor plan around them is not. Violates **Calibrate**.
+- The dashboard WebSocket URL is hardcoded to `ws://localhost:8000/ws`, so the Docker dashboard only works when the browser runs on the Docker host.
+- The backend container runs `run.py` with `reload=True`; the dashboard image with the store fix (b278fa8) was not rebuilt (that fix was tested on the Vite dev server).
+- CI has not run since the hang guard; whether it passes or where it blocks is still unknown.
