@@ -9,8 +9,10 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=sqlite+aiosqlite:///./flowtrace.db
+      - DATABASE_URL=sqlite+aiosqlite:////app/data/flowtrace.db  # on the flowtrace-db volume, so it survives rebuilds
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - INGEST_API_KEY=${INGEST_API_KEY:-}  # unset: writes refused (503); see backend/auth.py
+      - READ_API_KEY=${READ_API_KEY:-}
       - MQTT_BROKER_HOST=mosquitto
       - MQTT_BROKER_PORT=1883
     volumes:
@@ -23,11 +25,12 @@ services:
     build:
       context: ./dashboard
       dockerfile: Dockerfile
+      args:
+        # baked into the JS bundle (anyone who loads the dashboard can read it); same value as the backend's READ_API_KEY
+        VITE_READ_API_KEY: ${READ_API_KEY:-}
     container_name: flowtrace-dashboard
     ports:
       - "3000:3000"
-    environment:
-      - VITE_API_URL=http://localhost:8000
     depends_on:
       - backend
     restart: unless-stopped
