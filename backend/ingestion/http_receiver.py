@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime, timezone
 import logging
-from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+from sqlalchemy.dialects import postgresql, sqlite
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.session import get_session
@@ -40,10 +40,19 @@ async def persist_reading(db, node_id, device_id, rssi, dt, battery_pct=None, ts
         await db.flush()
     else:
         device.last_seen = dt
-    # shortcut: SQLite-only upsert (the only driver in requirements); use the postgresql dialect's insert if that changes
-    res = await db.execute(sqlite_insert(Reading).values(node_id=node_id, device_id=device_id, rssi=rssi, timestamp=dt,
-                                                         battery_pct=battery_pct, ts_ms=ts_ms).on_conflict_do_nothing())
+    res = await db.execute(reading_insert(db.get_bind().dialect.name, node_id=node_id, device_id=device_id, rssi=rssi,
+                                          timestamp=dt, battery_pct=battery_pct, ts_ms=ts_ms))
     return "ok" if res.rowcount else "duplicate"
+
+
+# Dialects whose INSERT has ON CONFLICT DO NOTHING; the conflict is uq_reading_node_device_ts (NULL ts_ms never collides)
+_INSERT = {"sqlite": sqlite.insert, "postgresql": postgresql.insert}
+
+
+def reading_insert(dialect: str, **values):
+    if dialect not in _INSERT:
+        raise NotImplementedError(f"reading dedupe needs ON CONFLICT DO NOTHING; no support for {dialect!r}")
+    return _INSERT[dialect](Reading).values(**values).on_conflict_do_nothing()
 
 
 def parse_readings(data) -> list[tuple]:
