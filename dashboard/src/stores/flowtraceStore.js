@@ -93,6 +93,7 @@ async function api(path) {
 }
 
 let _retry = null
+let _wasLive = false  // reached the backend at least once; initial state is also 'offline'
 let _poll = null
 
 export const useFlowTraceStore = create(
@@ -198,6 +199,8 @@ export const useFlowTraceStore = create(
         set({ wsRef: null, wsStatus: 'reconnecting' })
         if (get().connection === 'connected') {
           set({ connection: 'offline' })           // keep last real data, flagged stale
+        } else if (get().connection === 'offline' && _wasLive) {
+          // failed reconnect after live data: stay offline, never swap real data for mock
         } else if (get().connection !== 'demo') {
           get().enterDemo()                        // never reached backend: explicit demo
         } else {
@@ -210,6 +213,7 @@ export const useFlowTraceStore = create(
       set({ wsRef: ws })
 
       ws.onopen = () => {
+        _wasLive = true
         stopMockUpdates()
         // drop demo data so mock values never mix with live ones
         set({ connection: 'connected', wsStatus: 'connected', devices: [], insights: [], nodeHealth: [], venueStats: EMPTY_STATS })
