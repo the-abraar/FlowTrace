@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 import { Bell, CheckCircle, AlertTriangle, TrendingUp, Lightbulb, Zap } from 'lucide-react'
 import { useFlowTraceStore } from '../stores/flowtraceStore'
 import { timeAgo } from '../utils/positioning'
@@ -114,9 +114,10 @@ function InsightCard({ insight, onAct }) {
 // ── Main panel ────────────────────────────────────────────────────────────────
 export default function InsightPanel() {
   const insights = useFlowTraceStore((s) => s.insights)
+  const insightsNote = useFlowTraceStore((s) => s.insightsNote)
   const markInsightActed = useFlowTraceStore((s) => s.markInsightActed)
   const prevCountRef = useRef(insights.length)
-  const [filter, setFilter] = useStateLocal('ALL')
+  const [filter, setFilter] = useState('ALL')
 
   // Sound alert on new ALERT insights
   useEffect(() => {
@@ -177,7 +178,7 @@ export default function InsightPanel() {
       <div className="flex-1 overflow-y-auto space-y-2 pr-1 min-h-0">
         {filtered.length === 0 && (
           <div className="text-center text-flowtrace-textMuted text-xs py-8 italic">
-            No insights yet — waiting for agent engine…
+            {insightsNote ?? 'No insights yet — waiting for agent engine…'}
           </div>
         )}
         {filtered.map((insight) => (
@@ -190,10 +191,4 @@ export default function InsightPanel() {
       </div>
     </div>
   )
-}
-
-// Simple local state helper (avoids importing useState everywhere)
-function useStateLocal(initial) {
-  const { useState } = require('react')
-  return useState(initial)
 }
