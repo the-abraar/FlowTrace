@@ -3,6 +3,7 @@ on: [push, pull_request]
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 20 # a hung test once held the job for 4 hours
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
