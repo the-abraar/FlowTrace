@@ -2,8 +2,6 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import * as d3 from 'd3'
 import { useFlowTraceStore } from '../stores/flowtraceStore'
 import {
-  ZONE_DEFINITIONS,
-  NODE_POSITIONS,
   dwellTimeColor,
   gridToSvg,
   formatDwell,
@@ -19,6 +17,7 @@ export default function LiveMap() {
   const [tooltip, setTooltip] = useState(null)
   const devices = useFlowTraceStore((s) => s.devices)
   const nodeHealth = useFlowTraceStore((s) => s.nodeHealth)
+  const zones = useFlowTraceStore((s) => s.zones)
 
   // ── Responsive resize ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -61,7 +60,7 @@ export default function LiveMap() {
     zoneG.selectAll('.zone-rect').remove()
     zoneG.selectAll('.zone-label').remove()
 
-    ZONE_DEFINITIONS.forEach((z) => {
+    zones.forEach((z) => {
       const { px: x1, py: y1 } = toSvg(z.x, z.y)
       const { px: x2, py: y2 } = toSvg(z.x + z.w, z.y + z.h)
       const { px: lx, py: ly } = toSvg(z.label.x, z.label.y)
@@ -92,9 +91,8 @@ export default function LiveMap() {
     const nodeG = svg.select('.node-layer')
     nodeG.selectAll('.node').remove()
 
-    NODE_POSITIONS.forEach((np) => {
-      const health = nodeHealth.find((n) => n.id === np.id)
-      const online = health?.online ?? true
+    nodeHealth.forEach((np) => {
+      const online = np.online
       const { px, py } = toSvg(np.x, np.y)
       const r = Math.max(6, w / 90)
 
@@ -133,7 +131,7 @@ export default function LiveMap() {
         .attr('opacity', 0.8)
         .text(np.id)
     })
-  }, [dims, nodeHealth])
+  }, [dims, nodeHealth, zones])
 
   // ── Animate device dots (separate effect for performance) ─────────────────
   useEffect(() => {

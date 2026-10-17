@@ -4,8 +4,8 @@
  * and dwell-time colour coding used across the dashboard.
  */
 
-// ── Zone definitions (in 10m × 10m coordinate space) ──────────────────────
-export const ZONE_DEFINITIONS = [
+// ── DEMO-ONLY layout (made up; used only while the banner says DEMO). Live data uses /api/v1 zones and nodes. ──
+export const DEMO_ZONES = [
   {
     id: 'vr',
     name: 'VR Zone',
@@ -49,7 +49,7 @@ export const ZONE_DEFINITIONS = [
 ]
 
 // ── Node positions (fixed hardware) ──────────────────────────────────────────
-export const NODE_POSITIONS = [
+export const DEMO_NODE_POSITIONS = [
   { id: 'NODE-01', x: 1.5, y: 1.5 },
   { id: 'NODE-02', x: 5.5, y: 1.5 },
   { id: 'NODE-03', x: 8.5, y: 1.5 },
@@ -57,6 +57,14 @@ export const NODE_POSITIONS = [
   { id: 'NODE-05', x: 5.5, y: 6.5 },
   { id: 'NODE-06', x: 8.5, y: 7.5 },
 ]
+
+// Backend zone ({name,label,color,polygon}) -> map rectangle. shortcut: bounding box, fine while zones are rectangles
+export function apiZoneToRect(z) {
+  const xs = z.polygon.map((p) => p[0]), ys = z.polygon.map((p) => p[1])
+  const x = Math.min(...xs), y = Math.min(...ys), w = Math.max(...xs) - x, h = Math.max(...ys) - y
+  const rgb = [1, 3, 5].map((i) => parseInt(z.color.slice(i, i + 2), 16)).join(',')
+  return { id: z.name, name: z.label, x, y, w, h, fill: `rgba(${rgb}, 0.12)`, stroke: z.color, label: { x: x + w / 2, y: y + h / 2 } }
+}
 
 // ── Zone colour map (name → tailwind/hex) ─────────────────────────────────
 export const ZONE_COLOR_MAP = {

@@ -1,9 +1,9 @@
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
+import { DEMO_ZONES, DEMO_NODE_POSITIONS, apiZoneToRect } from '../utils/positioning'
 
 // ─── Mock data generators ────────────────────────────────────────────────────
 const ZONES = ['VR Zone', 'Laser Tag', 'Food Court', 'Exit', 'Lobby']
-const NODES = ['NODE-01', 'NODE-02', 'NODE-03', 'NODE-04', 'NODE-05', 'NODE-06']
 
 function randomBetween(a, b) {
   return Math.random() * (b - a) + a
@@ -24,11 +24,11 @@ function generateDevice(id) {
   }
 }
 
-function generateNode(id) {
+function generateNode({ id, x, y }) {
   return {
     id,
-    x: randomBetween(1, 9),
-    y: randomBetween(1, 9),
+    x,
+    y,
     online: Math.random() > 0.15,
     lastSeen: Date.now() - Math.floor(randomBetween(0, 60_000)),
     rssi: Math.floor(randomBetween(-80, -30)),
@@ -79,7 +79,8 @@ function generateInsight(index) {
 
 // ─── Store ───────────────────────────────────────────────────────────────────
 // connection: 'connected' (live backend) | 'demo' (backend unreachable, MOCK data) | 'offline' (lost live backend, data frozen)
-const WS_URL = 'ws://localhost:8000/ws'
+// same origin: nginx (docker) and the Vite dev proxy both forward /ws to the backend. VITE_WS_URL overrides.
+const WS_URL = import.meta.env.VITE_WS_URL || `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`
 const EMPTY_STATS = { totalToday: 0, currentlyActive: 0, avgDwellMinutes: 0, topZone: '—', conversionEvents: null }
 
 // Backend READ_API_KEY, if set. It ships in the JS bundle, so it only keeps out people who cannot load the dashboard.
@@ -101,6 +102,7 @@ export const useFlowTraceStore = create(
     devices: [],
     insights: [],
     nodeHealth: [],
+    zones: [],                // venue zone rectangles: from /api/v1/analytics/zones when live, DEMO_ZONES in demo
     insightsNote: null,       // why AI insights are empty when connected (e.g. 503 message)
     connection: 'offline',
     wsStatus: 'disconnected',  // raw socket state, kept for existing consumers
@@ -139,8 +141,8 @@ export const useFlowTraceStore = create(
 
     // Pull real values from /api/v1 (only called while connected)
     refreshFromApi: async () => {
-      const [nodes, devs, summary, ins] = await Promise.allSettled([
-        api('/nodes'), api('/devices'), api('/analytics/summary'), api('/insights'),
+      const [nodes, devs, summary, ins, zones] = await Promise.allSettled([
+        api('/nodes'), api('/devices'), api('/analytics/summary'), api('/insights'), api('/analytics/zones'),
       ])
       if (get().connection !== 'connected') return
       const patch = {}
@@ -149,6 +151,7 @@ export const useFlowTraceStore = create(
           id: n.id, x: n.x_pos, y: n.y_pos, online: !!n.active, lastSeen: null, rssi: null, readingRate: null,
         }))
       }
+      if (zones.status === 'fulfilled') patch.zones = zones.value.map(apiZoneToRect)
       const stats = { ...get().venueStats }
       if (devs.status === 'fulfilled') stats.totalToday = devs.value.length
       if (summary.status === 'fulfilled') {
@@ -179,7 +182,7 @@ export const useFlowTraceStore = create(
     enterDemo: () => {
       const devices = Array.from({ length: 24 }, (_, i) => generateDevice(i + 1))
       set({
-        connection: 'demo', devices, nodeHealth: NODES.map(generateNode), insightsNote: null,
+        connection: 'demo', zones: DEMO_ZONES, devices, nodeHealth: DEMO_NODE_POSITIONS.map(generateNode), insightsNote: null,
         insights: Array.from({ length: 8 }, (_, i) => generateInsight(i)).sort((a, b) => b.timestamp - a.timestamp),
         venueStats: { totalToday: 312, currentlyActive: devices.length, avgDwellMinutes: 18, topZone: 'VR Zone', conversionEvents: 47 },
       })
@@ -216,7 +219,7 @@ export const useFlowTraceStore = create(
         _wasLive = true
         stopMockUpdates()
         // drop demo data so mock values never mix with live ones
-        set({ connection: 'connected', wsStatus: 'connected', devices: [], insights: [], nodeHealth: [], venueStats: EMPTY_STATS })
+        set({ connection: 'connected', wsStatus: 'connected', devices: [], insights: [], nodeHealth: [], zones: [], venueStats: EMPTY_STATS })
         get().refreshFromApi()
         clearInterval(_poll)
         _poll = setInterval(() => get().refreshFromApi(), 5000)

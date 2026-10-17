@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useMemo } from 'react'
 import * as d3 from 'd3'
 import { useFlowTraceStore } from '../stores/flowtraceStore'
-import { gridToSvg, dwellTimeColor, ZONE_DEFINITIONS } from '../utils/positioning'
+import { gridToSvg, dwellTimeColor } from '../utils/positioning'
 
 const GRID_SIZE = 10
 const TRAIL_MINUTES = 10
@@ -13,6 +13,7 @@ export default function GhostTrail() {
   const [selectedId, setSelectedId] = useState('')
   const [scrubberValue, setScrubberValue] = useState(100)  // 0–100 %, 100 = now
   const devices = useFlowTraceStore((s) => s.devices)
+  const zones = useFlowTraceStore((s) => s.zones)
 
   const deviceOptions = useMemo(
     () => devices.map((d) => d.id).sort(),
@@ -62,7 +63,7 @@ export default function GhostTrail() {
     // Background zones (faint)
     const zoneG = svg.select('.gt-zones')
     zoneG.selectAll('*').remove()
-    ZONE_DEFINITIONS.forEach((z) => {
+    zones.forEach((z) => {
       const { px: x1, py: y1 } = toSvg(z.x, z.y)
       const { px: x2, py: y2 } = toSvg(z.x + z.w, z.y + z.h)
       zoneG.append('rect')
@@ -148,7 +149,7 @@ export default function GhostTrail() {
             .attr('r', 20).attr('opacity', 0)
         })
     }
-  }, [trailPoints, dims, selectedDevice])
+  }, [trailPoints, dims, selectedDevice, zones])
 
   return (
     <div className="flowtrace-card-glow h-full flex flex-col gap-4">
