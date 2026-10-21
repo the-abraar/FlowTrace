@@ -61,8 +61,8 @@ export default function LiveMap() {
     zoneG.selectAll('.zone-label').remove()
 
     zones.forEach((z) => {
-      const { px: x1, py: y1 } = toSvg(z.x, z.y)
-      const { px: x2, py: y2 } = toSvg(z.x + z.w, z.y + z.h)
+      const { px: x1, py: y1 } = toSvg(z.x, z.y + z.h)  // NW corner = SVG top-left
+      const { px: x2, py: y2 } = toSvg(z.x + z.w, z.y)
       const { px: lx, py: ly } = toSvg(z.label.x, z.label.y)
 
       zoneG.append('rect')

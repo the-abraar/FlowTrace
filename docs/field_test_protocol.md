@@ -10,7 +10,7 @@ The tools below were validated only on synthetic data (`tools/tests`).
 - Tape measure or laser, floor markers, a laptop logging readings.
 
 ## Procedure
-1. **Survey.** Draw the venue to scale. Record each node's (x, y) in metres, same origin as `VENUE_ZONES`.
+1. **Survey.** Draw the venue to scale. Record each node's (x, y) in metres, same origin as `VENUE_ZONES`: (0, 0) is the south-west corner, x grows east, y grows north.
 2. **Grid.** Mark test points on a 2 m grid across the walkable floor (min 25 points; a 10x10 m room = ~25). Add 4 points within 0.5 m of each zone boundary (boundary points drive zone misclassification).
 3. **Capture.** At each point, hold the tag at waist height (1.0 m), body *not* between tag and nodes, and log **N = 60 samples per node** (about 60 s at 1 Hz). Repeat at 3 orientations (facing 0, 120, 240 degrees) and, for phones, in-hand vs. trouser pocket.
 4. **Conditions.** Run the full grid twice: (a) empty venue; (b) crowd of >= 20 people moving normally (or at least 50% of expected peak). Run a third pass at a different time of day if the venue has changing furniture/doors.

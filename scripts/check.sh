@@ -35,6 +35,7 @@ backend_tests() { (cd backend && INGEST_API_KEY=${INGEST_API_KEY:-test-ingest} "
 tools_tests() { (cd tools && "$VENV/bin/python" -m pytest -q tests && "$VENV/bin/python" -m pytest -q $(ls tests/test_*.py | sort -r)); }
 agent_import() { (cd backend && "$AVENV/bin/python" -c "import agent.flowtrace_agent"); }
 node_check() { local f rc=0; for f in $(find dashboard -name '*.js' -not -path '*/node_modules/*' -not -path '*/dist/*'); do node --check "$f" || rc=1; done; return $rc; }
+dash_test() { node --test dashboard/src/utils/*.test.js; }
 dash_build() { (cd dashboard && { [ -d node_modules ] || npm ci --silent; } && npm run build --silent); }
 
 mkvenv "$VENV" ruff -r backend/requirements.txt
@@ -47,6 +48,7 @@ if [ -n "$(find . -name node_modules -prune -o \( -name '*.html' -o -name '*.js'
 fi
 if [ "$FAST" = 0 ]; then
   step "dashboard build" dash_build
+  step "dashboard unit tests" dash_test
   step "backend tests (core only, fwd+rev)" backend_tests
   step "tools tests (fwd+rev)" tools_tests
   mkvenv "$AVENV" -r backend/requirements-agent.txt

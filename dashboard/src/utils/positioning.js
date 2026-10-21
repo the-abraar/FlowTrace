@@ -127,6 +127,7 @@ export function interpolatePosition(from, to, progress) {
 
 /**
  * Convert grid coordinates to SVG pixel coordinates.
+ * World y points north (origin = SW corner, see backend zone_detector.py); SVG y grows down, so y is flipped here.
  * @param {number} gx — grid x (0–10)
  * @param {number} gy — grid y (0–10)
  * @param {number} svgW — SVG width in px
@@ -136,7 +137,7 @@ export function interpolatePosition(from, to, progress) {
 export function gridToSvg(gx, gy, svgW, svgH, gridSize = 10) {
   return {
     px: (gx / gridSize) * svgW,
-    py: (gy / gridSize) * svgH,
+    py: (1 - gy / gridSize) * svgH,
   }
 }
 
@@ -146,7 +147,7 @@ export function gridToSvg(gx, gy, svgW, svgH, gridSize = 10) {
 export function svgToGrid(px, py, svgW, svgH, gridSize = 10) {
   return {
     x: (px / svgW) * gridSize,
-    y: (py / svgH) * gridSize,
+    y: (1 - py / svgH) * gridSize,
   }
 }
 

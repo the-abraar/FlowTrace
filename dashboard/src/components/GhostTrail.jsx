@@ -64,8 +64,8 @@ export default function GhostTrail() {
     const zoneG = svg.select('.gt-zones')
     zoneG.selectAll('*').remove()
     zones.forEach((z) => {
-      const { px: x1, py: y1 } = toSvg(z.x, z.y)
-      const { px: x2, py: y2 } = toSvg(z.x + z.w, z.y + z.h)
+      const { px: x1, py: y1 } = toSvg(z.x, z.y + z.h)  // NW corner = SVG top-left
+      const { px: x2, py: y2 } = toSvg(z.x + z.w, z.y)
       zoneG.append('rect')
         .attr('x', x1).attr('y', y1)
         .attr('width', x2 - x1).attr('height', y2 - y1)
