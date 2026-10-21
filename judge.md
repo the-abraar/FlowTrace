@@ -444,3 +444,22 @@ This is a 30-day demo project that has not passed its own Day-11 milestone ("Bac
 - The dashboard WebSocket URL is hardcoded to `ws://localhost:8000/ws`, so the Docker dashboard only works when the browser runs on the Docker host.
 - The backend container runs `run.py` with `reload=True`; the dashboard image with the store fix (b278fa8) was not rebuilt (that fix was tested on the Vite dev server).
 - **CI hang, found:** the first capped run (38931387401) hit `faulthandler_timeout`: the block is TestClient shutdown in `tests/test_insights.py::test_disabled_returns_503`, with the event loop stuck in `_cancel_all_tasks`. Suspected cause (not reproduced locally): `purge_loop` cancelled mid-query, and a pooled aiosqlite connection reused on the next TestClient's loop. 44f49c4 makes the lifespan await its cancelled tasks and dispose the engine; the next two CI runs passed (38934313318, 38934314524; about 1 min each). Two green runs do not rule out a rarer hang; the 20-minute cap stays. Run 38928868466 (from before the cap) was still running when I stopped; cancel it in GitHub Actions.
+
+### Update 13 (2026-10-21, browser check of the live map)
+
+**Setup:** `docker compose up` (mosquitto, backend, dashboard; images rebuilt after fbc7f5e, `INGEST_API_KEY` set to a throwaway value). A stdlib script posted firmware-shaped batches from the 9 seeded nodes for 3 tags walking a circle (RSSI from distance, no noise). Headless Chrome (playwright-core, `channel: 'chrome'`) on `localhost:3000`, at 1280x800 and 375x812.
+
+**Works (seen in the browser):**
+- The map draws the backend's 6 zones (Entrance, VR Experience, Food Court, Laser Tag Arena, Exit Area, Retail / Merch) and its 9 nodes (node-NW..node-C); the demo layout is gone in live mode. `/analytics/zones`, `/nodes`, `/devices`, `/analytics/summary` return 200 through nginx.
+- Live updates: same-origin `ws://localhost:3000/ws` opens; a `positions` message arrives every ~2 s with all 3 tags, and the dots move. Stats show 3 active.
+- Backend stopped while live: red OFFLINE banner, last real data kept, no switch to DEMO over 15 s of failed retries. Backend restarted: banner clears and positions resume. Fresh load with the backend down: yellow DEMO banner plus "DEMO DATA" labels.
+- Console: only the expected 503 from `/insights` (no `OPENAI_API_KEY`). No page errors. No horizontal scroll at 375 px.
+
+**Fixed (9180eee):**
+- Nodes on the venue walls (x or y = 0 or 10, 8 of the 9) were half clipped by the SVG edge, labels cut off. The map now has a margin.
+- With the backend container stopped, nginx held `/ws` connects for its 60 s default: the page stayed OFFLINE for up to a minute after the backend came back, and a fresh load showed "OFFLINE ... data is stale" (with no data) instead of DEMO. nginx now gives up after 5 s; both cases rechecked in the browser.
+
+**Not fixed:**
+- The map is drawn y-down: node-S and node-SW sit at the top, node-N at the bottom, so the floor plan is upside down relative to the node names.
+- At 375 px, side node labels are still slightly cut; "VR Experience" overflows its stats card; the header "System Active" badge stays green in DEMO and OFFLINE.
+- Fresh load shows the OFFLINE text for the first connect attempt (initial state is `offline`); now up to ~5 s instead of 60 s.
