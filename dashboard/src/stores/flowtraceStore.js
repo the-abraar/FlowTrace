@@ -78,7 +78,7 @@ function generateInsight(index) {
 }
 
 // ─── Store ───────────────────────────────────────────────────────────────────
-// connection: 'connected' (live backend) | 'demo' (backend unreachable, MOCK data) | 'offline' (lost live backend, data frozen)
+// connection: 'connecting' (before the first attempt ends) | 'connected' (live backend) | 'demo' (backend unreachable, MOCK data) | 'offline' (lost live backend, data frozen)
 // same origin: nginx (docker) and the Vite dev proxy both forward /ws to the backend. VITE_WS_URL overrides.
 const WS_URL = import.meta.env.VITE_WS_URL || `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`
 const EMPTY_STATS = { totalToday: 0, currentlyActive: 0, avgDwellMinutes: 0, topZone: '—', conversionEvents: null }
@@ -94,7 +94,7 @@ async function api(path) {
 }
 
 let _retry = null
-let _wasLive = false  // reached the backend at least once; initial state is also 'offline'
+let _wasLive = false  // reached the backend at least once
 let _poll = null
 
 export const useFlowTraceStore = create(
@@ -104,7 +104,7 @@ export const useFlowTraceStore = create(
     nodeHealth: [],
     zones: [],                // venue zone rectangles: from /api/v1/analytics/zones when live, DEMO_ZONES in demo
     insightsNote: null,       // why AI insights are empty when connected (e.g. 503 message)
-    connection: 'offline',
+    connection: 'connecting',
     wsStatus: 'disconnected',  // raw socket state, kept for existing consumers
     wsRef: null,
     venueStats: EMPTY_STATS,

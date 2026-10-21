@@ -19,9 +19,9 @@ export default function StatsBar() {
       {connection === 'demo' && <div className="col-span-full text-xs font-bold text-yellow-400">DEMO DATA: simulated values</div>}
       {connection === 'offline' && <div className="col-span-full text-xs font-bold text-red-400">STALE: backend offline, last known values</div>}
       {stats.map((s, i) => (
-        <div key={i} className="bg-neutral-800 rounded-xl p-5 border border-neutral-700/50">
+        <div key={i} className="min-w-0 bg-neutral-800 rounded-xl p-5 border border-neutral-700/50">
           <div className="text-neutral-400 text-sm mb-1">{s.label}</div>
-          <div className={`text-3xl font-bold ${s.color}`}>{s.value}</div>
+          <div className={`text-xl sm:text-3xl font-bold break-words ${s.color}`}>{s.value}</div>
         </div>
       ))}
     </div>
