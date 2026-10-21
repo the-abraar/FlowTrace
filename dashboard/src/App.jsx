@@ -6,11 +6,14 @@ import InsightPanel from './components/InsightPanel'
 import ConnectionBanner from './components/ConnectionBanner'
 import PopUpDashboard from './components/PopUpDashboard'
 import { useWebSocket } from './hooks/useWebSocket'
+import { useFlowTraceStore } from './stores/flowtraceStore'
+import { systemBadge } from './utils/systemStatus'
 import './index.css'
 
 function App() {
   useWebSocket() // Connect to real-time feed
   const [isPopUpMode, setIsPopUpMode] = useState(true);
+  const badge = systemBadge(useFlowTraceStore((s) => s.connection))
 
   return (
     <>
@@ -28,9 +31,9 @@ function App() {
           >
             {isPopUpMode ? 'Pop-Up Mode: ON' : 'Pop-Up Mode: OFF'}
           </button>
-          <span className="px-3 py-1 bg-green-900/30 text-green-400 border border-green-800/50 rounded-full text-xs flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            System Active
+          <span data-testid="system-status" className={`px-3 py-1 border rounded-full text-xs flex items-center gap-2 ${badge.box}`}>
+            <div className={`w-2 h-2 rounded-full ${badge.dot}`}></div>
+            {badge.label}
           </span>
         </div>
       </header>

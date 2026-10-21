@@ -18,6 +18,7 @@ export default function LiveMap() {
   const devices = useFlowTraceStore((s) => s.devices)
   const nodeHealth = useFlowTraceStore((s) => s.nodeHealth)
   const zones = useFlowTraceStore((s) => s.zones)
+  const pad = Math.max(dims.w / 25, 20)
 
   // ── Responsive resize ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -234,8 +235,9 @@ export default function LiveMap() {
           ref={svgRef}
           width={dims.w}
           height={dims.h}
-          // margin around the venue: real nodes sit on its walls (x or y = 0 or 10) and were half clipped
-          viewBox={`${-dims.w / 25} ${-dims.h / 25} ${dims.w * 1.08} ${dims.h * 1.08}`}
+          // margin around the venue: real nodes sit on its walls (x or y = 0 or 10) and were half clipped.
+          // Floor of 20: node labels have minimum sizes (font 7, offset 14), so w/25 alone clips them below ~500 px.
+          viewBox={`${-pad} ${-pad} ${dims.w + 2 * pad} ${dims.h + 2 * pad}`}
           className="rounded-lg overflow-hidden"
           style={{ background: '#080c14' }}
         >
