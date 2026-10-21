@@ -234,6 +234,8 @@ export default function LiveMap() {
           ref={svgRef}
           width={dims.w}
           height={dims.h}
+          // margin around the venue: real nodes sit on its walls (x or y = 0 or 10) and were half clipped
+          viewBox={`${-dims.w / 25} ${-dims.h / 25} ${dims.w * 1.08} ${dims.h * 1.08}`}
           className="rounded-lg overflow-hidden"
           style={{ background: '#080c14' }}
         >
