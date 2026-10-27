@@ -470,3 +470,26 @@ This is a 30-day demo project that has not passed its own Day-11 milestone ("Bac
 - **2026-10-25 re-check (no code change):** the five items requested again (dedupe by node + `ts_ms`, MQTT broker in compose, dashboard read key, calibrated module-level `position_engine`, Device purge) were already done in Update 10 and their tests exist (`test_retention_and_calibration.py`, `test_mqtt_broker_e2e.py`, dedupe tests). Not redone. Docker not run this round. `scripts/check.sh` passes all 10 steps (venvs in the session scratchpad).
 
 - **2026-10-27 re-check (no code change):** code items 4 and 7 of Update 8 (MQTT broker in compose + e2e test, dedupe by node + `ts_ms`, dashboard read key, calibrated module-level `position_engine`, Device purge with `DEVICE_RETENTION_DAYS`) are still in place from Update 10. Not redone. Ran the opt-in `test_mqtt_broker_e2e.py` against an `eclipse-mosquitto:2.0` container with the repo's `docker/mosquitto.conf`: passed; container removed. `scripts/check.sh` passes all 10 steps (venvs in the session scratchpad). All "You" items remain.
+
+### Update (2026-10-27, agent round): firmware compiled, MQTT run
+
+Stopped early at the usage limit. Only the firmware part was done.
+
+**Done:**
+- **Firmware compiles.** All three sketches build for `esp32:esp32:esp32` (DevKit V1) with arduino-cli 1.2.2, ESP32 core 2.0.17 and the library versions pinned in the sketch headers: NimBLE-Arduino 1.4.1, ArduinoJson 6.21.3, PubSubClient 2.8, WiFiManager 2.0.17. Flash use: scanner 87%, gateway 80%, beacon 85%. The only warning is beacon's deprecated `ADC_ATTEN_DB_11`. Core 3.x is not supported: `esp_task_wdt_init(int, bool)` changed there.
+- **Scanner bugs fixed** (the commit before this one):
+  - The JSON document was a fixed 8 KB. A full buffer (100 readings) overflowed it at about 85 readings and left one reading without `rssi`, so the backend refused the whole batch with 422. The firmware then re-buffered and failed the same way on every upload. Checked on the host with ArduinoJson 6.21.3: old size gives 42 of 100 readings with one partial object; the new per-reading size gives 100 of 100. The doc is now sized from `count`.
+  - The upload snapshot (~6 KB) lived on the 8 KB loop-task stack. It is now `static`.
+  - NimBLE 1.4's second `setAdvertisedDeviceCallbacks` argument is `wantDuplicates`, so `SCAN_FILTER_DUPLICATES false` gave one reading per tag per 10 s window instead of every advertisement as `config.h` documents. Now inverted.
+- `scripts/check.sh` passes all 10 steps.
+
+**Not done (left for next round):**
+- MQTT and Docker end-to-end with a simulated scanner, and the dashboard browser screenshot: not run this round. Update 10 and the 2026-10-27 re-check above ran the broker test.
+- Gap 5 (dashboard read key) is already covered by `VITE_READ_API_KEY` from Update 10. Not changed.
+- Findings not fixed:
+  - The scanner's default `NODE_ID "NODE_A"` is not one of the backend's seeded nodes (`node-NW` .. `node-C`). The backend answers 200 `partial` and drops the readings, so the firmware counts the upload as a success.
+  - No firmware publishes MQTT. The scanner only POSTs HTTP; the gateway subscribes to `flowtrace/nodes/+/readings`, the same topic the backend subscribes to.
+  - The broker allows anonymous clients on a published port 1883, so anyone on the LAN can inject readings. That breaks **Declare auth**.
+  - `BatchReadingsPayload.readings` has no size cap (**Cap**).
+  - No test checks that the firmware JSON fields stay in sync with the backend schema (**Derive**).
+- Unverified: nothing has been flashed or run on hardware; RSSI accuracy is unmeasured; the scanner's heap and stack are fine on paper only.
