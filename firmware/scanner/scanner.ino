@@ -267,7 +267,7 @@ static void maintainWiFi() {
 // ---------------------------------------------------------------------------
 static bool uploadReadings() {
   // Snapshot the buffer under lock, then release so BLE can keep writing.
-  AuraReading snapshot[BUFFER_MAX_ENTRIES];
+  static AuraReading snapshot[BUFFER_MAX_ENTRIES];  // static: ~6 KB would nearly fill the 8 KB loop-task stack
   int count = 0;
 
   portENTER_CRITICAL(&s_bufMux);
@@ -301,7 +301,10 @@ static bool uploadReadings() {
   // }
 
   // Use a DynamicJsonDocument sized for the maximum possible payload.
-  DynamicJsonDocument doc(JSON_BUFFER_SIZE);
+  // Sized per reading (1 array slot + 5 members + copied id/mac): a fixed 8 KB overflowed at ~85 of 100
+  // readings and left a partial object without rssi, so the backend rejected the whole batch (422).
+  DynamicJsonDocument doc(JSON_OBJECT_SIZE(3) + JSON_ARRAY_SIZE(count) +
+                          count * (JSON_OBJECT_SIZE(5) + sizeof(AuraReading::deviceId) + sizeof(AuraReading::macAddr)));
   doc["node_id"]    = NODE_ID;
   doc["fw_version"] = FW_VERSION;
   JsonArray readings = doc.createNestedArray("readings");
@@ -419,7 +422,7 @@ void setup() {
   NimBLEDevice::setPower(ESP_PWR_LVL_N6); // scanner TX power (for scan req)
   s_pScan = NimBLEDevice::getScan();
   s_pScan->setAdvertisedDeviceCallbacks(&s_scanCallbacks,
-    SCAN_FILTER_DUPLICATES); // second arg = filter duplicates flag
+    !SCAN_FILTER_DUPLICATES); // NimBLE 1.4 second arg = wantDuplicates (the inverse of the filter flag)
   s_pScan->setDuplicateFilter(SCAN_FILTER_DUPLICATES);
 
   s_lastUploadMs = millis();
