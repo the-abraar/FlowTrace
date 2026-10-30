@@ -40,3 +40,25 @@ def test_zone_detector_two_zones():
     assert zd.update("d", 8, 5) == "RIGHT"
     assert zd.point_in_zone(20, 20) is None and zd.update("d", 20, 20) is None
     assert [v["zone"] for v in zd.get_device_journey("d")] == ["LEFT", "RIGHT"]
+
+
+def test_bounce_rate_and_ab_split():
+    from datetime import timedelta
+    from api.routers.analytics import ab_split
+    zd = ZoneDetector([Zone("LEFT", "L", ((0, 0), (5, 0), (5, 10), (0, 10))),
+                       Zone("RIGHT", "R", ((5, 0), (10, 0), (10, 10), (5, 10)))])
+    assert zd.bounce_rate() is None and ab_split(zd.get_zone_stats(), "") is None  # no data yet
+    zd.update("quick", 2, 5)
+    zd.update("quick", 20, 20)  # left LEFT at once: a bounce
+    zd.update("slow", 8, 5)
+    zd._device_states["slow"].active_visit.entry_time -= timedelta(seconds=120)
+    assert zd.bounce_rate() == 1.0  # the open visit does not count yet
+    zd.update("slow", 2, 5)  # leaves RIGHT after 120 s, now in LEFT
+    assert zd.bounce_rate() == 0.5
+    stats = zd.get_zone_stats()
+    assert ab_split(stats, "") == {"a": "L", "b": "R", "a_share": 0.667, "b_share": 0.333}
+    assert ab_split(stats, "RIGHT, LEFT")["a"] == "R"
+    assert ab_split(stats, "RIGHT,NOPE") is None and ab_split(stats, "LEFT,LEFT") is None
+    with TestClient(app, headers={"x-api-key": "test-ingest"}) as c:
+        body = c.get("/api/v1/analytics/summary").json()
+        assert {"zones", "bounce_rate", "ab_test"} <= body.keys()

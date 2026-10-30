@@ -493,3 +493,10 @@ Stopped early at the usage limit. Only the firmware part was done.
   - `BatchReadingsPayload.readings` has no size cap (**Cap**).
   - No test checks that the firmware JSON fields stay in sync with the backend schema (**Derive**).
 - Unverified: nothing has been flashed or run on hardware; RSSI accuracy is unmeasured; the scanner's heap and stack are fine on paper only.
+
+### Update 14 (2026-10-30, agent round)
+
+- **Re-check, no code change:** dashboard read key (`VITE_READ_API_KEY` in `flowtraceStore.js`), calibrated module-level `position_engine` (`RSSI_CALIBRATION_JSON` in `PositionEngine.__init__`), and Device purge (`DEVICE_RETENTION_DAYS`, `database/retention.py`, `test_retention_and_calibration.py`) are still in place from Update 10. Not redone. Issue #2.
+- **Bounce rate and A/B are live (issue #1):** `/api/v1/analytics/summary` now also returns `bounce_rate` (share of finished zone visits under 60 s, the agent prompt's definition; `null` before any visit finishes) and `ab_test` (visit share of the two zones in `AB_TEST_ZONES="A,B"`, default the two most-visited; `null` without data or with a misconfigured pair). `PopUpDashboard` shows them in live mode and `n/a` only while they are `null`; demo values come from the mock store. Test: `test_bounce_rate_and_ab_split`.
+- Proof: `scripts/check.sh` passes all 10 steps (backend 15 passed, 2 skipped, both orders).
+- **Not checked:** not run in a browser or in Docker. Both figures come from the in-memory `ZoneDetector`, so they reset on a backend restart, and `total_visits` counts devices that visited a zone, not repeat visits. Bounce counts every zone, not only "pop-up" zones.

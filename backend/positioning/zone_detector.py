@@ -325,6 +325,11 @@ class ZoneDetector:
             }
         return stats
 
+    def bounce_rate(self, max_seconds: float = 60.0) -> float | None:
+        """Share of finished zone visits shorter than *max_seconds*; None before any visit has finished."""
+        dwells = [v.dwell_seconds for s in self._device_states.values() for v in s.visit_log if v.exit_time]
+        return round(sum(d < max_seconds for d in dwells) / len(dwells), 3) if dwells else None
+
     def remove_device(self, device_id: str) -> None:
         """Remove tracking state for a device (e.g. on session end)."""
         self._device_states.pop(device_id, None)
