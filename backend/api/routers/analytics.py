@@ -23,7 +23,7 @@ def ab_split(zones: dict[str, dict], pair: str) -> dict | None:
     names = [n.strip() for n in pair.split(",") if n.strip()]
     if not names:
         names = sorted(zones, key=lambda n: zones[n]["total_visits"], reverse=True)[:2]
-    if len(names) != 2 or not all(n in zones for n in names):
+    if len(set(names)) != 2 or not all(n in zones for n in names):
         return None  # misconfigured AB_TEST_ZONES shows n/a rather than a split of zones nobody chose
     a, b = (zones[n]["total_visits"] for n in names)
     if a + b == 0:
