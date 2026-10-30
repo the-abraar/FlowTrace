@@ -71,6 +71,8 @@ class Settings(BaseSettings):
     MAX_TRACKED_DEVICES: int = Field(default=5000, description="Reject new devices beyond this many")
     DEVICE_RETENTION_DAYS: float = Field(default=30.0, description="Delete Device rows (and their readings) unseen this long")
 
+    AB_TEST_ZONES: str = Field(default="", description="Two zone names 'A,B' for the A/B layout split; empty = the two most-visited zones")
+
     # ── Logging ───────────────────────────────────────────────────────────────
     LOG_LEVEL: str = Field(default="INFO")
 

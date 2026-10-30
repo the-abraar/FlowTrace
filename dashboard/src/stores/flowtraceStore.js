@@ -81,7 +81,7 @@ function generateInsight(index) {
 // connection: 'connecting' (before the first attempt ends) | 'connected' (live backend) | 'demo' (backend unreachable, MOCK data) | 'offline' (lost live backend, data frozen)
 // same origin: nginx (docker) and the Vite dev proxy both forward /ws to the backend. VITE_WS_URL overrides.
 const WS_URL = import.meta.env.VITE_WS_URL || `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`
-const EMPTY_STATS = { totalToday: 0, currentlyActive: 0, avgDwellMinutes: 0, topZone: '—', conversionEvents: null }
+const EMPTY_STATS = { totalToday: 0, currentlyActive: 0, avgDwellMinutes: 0, topZone: '—', conversionEvents: null, bounceRate: null, abTest: null }
 
 // Backend READ_API_KEY, if set. It ships in the JS bundle, so it only keeps out people who cannot load the dashboard.
 const READ_KEY = import.meta.env.VITE_READ_API_KEY || ''
@@ -163,6 +163,8 @@ export const useFlowTraceStore = create(
           : 0
         const top = zs.sort((a, b) => b[1].current_occupancy - a[1].current_occupancy)[0]
         stats.topZone = top && top[1].current_occupancy > 0 ? top[1].label : '—'
+        stats.bounceRate = summary.value.bounce_rate ?? null
+        stats.abTest = summary.value.ab_test ?? null
       }
       patch.venueStats = stats
       if (ins.status === 'fulfilled') {
@@ -184,7 +186,8 @@ export const useFlowTraceStore = create(
       set({
         connection: 'demo', zones: DEMO_ZONES, devices, nodeHealth: DEMO_NODE_POSITIONS.map(generateNode), insightsNote: null,
         insights: Array.from({ length: 8 }, (_, i) => generateInsight(i)).sort((a, b) => b.timestamp - a.timestamp),
-        venueStats: { totalToday: 312, currentlyActive: devices.length, avgDwellMinutes: 18, topZone: 'VR Zone', conversionEvents: 47 },
+        venueStats: { totalToday: 312, currentlyActive: devices.length, avgDwellMinutes: 18, topZone: 'VR Zone', conversionEvents: 47,
+          bounceRate: 0.34, abTest: { a: 'Front Display', b: 'Back Wall', a_share: 0.65, b_share: 0.35 } },
       })
       startMockUpdates(set, get)
     },

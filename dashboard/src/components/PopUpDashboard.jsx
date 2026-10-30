@@ -6,8 +6,10 @@ export default function PopUpDashboard() {
   const avgDwellMin = useFlowTraceStore((s) => s.venueStats.avgDwellMinutes)
   const connection = useFlowTraceStore((s) => s.connection)
   const demo = connection === 'demo'
-  // Bounce rate and A/B layout have no backend source yet: demo values only, "n/a" when live.
-  const bounceRate = demo ? "34%" : "n/a"
+  const stats = useFlowTraceStore((s) => s.venueStats)
+  const pct = (v) => `${Math.round(v * 100)}%`
+  const bounceRate = stats.bounceRate == null ? "n/a" : pct(stats.bounceRate)
+  const ab = stats.abTest
   const avgDwell = `${avgDwellMin}m`
 
   return (
@@ -40,15 +42,15 @@ export default function PopUpDashboard() {
         {/* A/B Test Results */}
         <div className="bg-neutral-900 p-5 rounded-lg border border-neutral-700">
           <div className="text-neutral-400 text-sm mb-2">A/B Layout Test</div>
-          {!demo ? <div className="text-4xl font-bold text-neutral-500">n/a</div> : <div className="flex justify-between items-end mt-2">
+          {!ab ? <div className="text-4xl font-bold text-neutral-500">n/a</div> : <div className="flex justify-between items-end mt-2">
             <div>
-              <div className="text-lg font-bold text-purple-400">Front Display</div>
-              <div className="text-xs text-neutral-500">65% Traffic</div>
+              <div className="text-lg font-bold text-purple-400">{ab.a}</div>
+              <div className="text-xs text-neutral-500">{pct(ab.a_share)} Traffic</div>
             </div>
             <div className="text-neutral-600 font-bold text-xl">vs</div>
             <div className="text-right">
-              <div className="text-lg font-bold text-neutral-400">Back Wall</div>
-              <div className="text-xs text-neutral-500">35% Traffic</div>
+              <div className="text-lg font-bold text-neutral-400">{ab.b}</div>
+              <div className="text-xs text-neutral-500">{pct(ab.b_share)} Traffic</div>
             </div>
           </div>}
         </div>
