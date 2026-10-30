@@ -58,7 +58,7 @@ def test_bounce_rate_and_ab_split():
     stats = zd.get_zone_stats()
     assert ab_split(stats, "") == {"a": "L", "b": "R", "a_share": 0.667, "b_share": 0.333}
     assert ab_split(stats, "RIGHT, LEFT")["a"] == "R"
-    assert ab_split(stats, "RIGHT,NOPE") is None and ab_split(stats, "LEFT,LEFT") is None
+    assert ab_split(stats, "RIGHT,NOPE") is None and ab_split(stats, "LEFT,LEFT") is None and ab_split(stats, "LEFT,LEFT,RIGHT") is None
     with TestClient(app, headers={"x-api-key": "test-ingest"}) as c:
         body = c.get("/api/v1/analytics/summary").json()
         assert {"zones", "bounce_rate", "ab_test"} <= body.keys()
