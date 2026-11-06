@@ -1,0 +1,12 @@
+reviews:
+  profile: assertive
+  path_instructions:
+    - path: "backend/**/*.py"
+      instructions: |
+        Python backend. Check input validation, auth/authorization, secrets in code, and error handling.
+    - path: "dashboard/**"
+      instructions: |
+        Vite dashboard. Flag XSS, unbounded re-renders, and hardcoded endpoints.
+
+tone_instructions: |
+  Be concise, direct, and constructive.
