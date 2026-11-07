@@ -36,6 +36,16 @@ def test_http_edge_cases():
         assert [d["id"] for d in c.get("/api/v1/devices").json()].count("DUP") == 1  # device row not duplicated
 
 
+def test_http_batch_at_limit_is_accepted_and_stored():
+    readings = [{"device_id": "BATCH-AT-LIMIT", "rssi": -60, "ts_ms": i} for i in range(MAX_BATCH_READINGS)]
+    with TestClient(app, headers={"x-api-key": "test-ingest"}) as c:
+        result = c.post("/api/v1/readings", json={"node_id": "node-SW", "readings": readings})
+        assert result.status_code == 200
+        assert result.json() == {"status": "ok", "inserted": MAX_BATCH_READINGS, "duplicates": 0, "unknown_nodes": []}
+        stored = c.get("/api/v1/nodes/node-SW/readings", params={"limit": 1000}).json()
+        assert sum(row["device_id"] == "BATCH-AT-LIMIT" for row in stored) == MAX_BATCH_READINGS
+
+
 def test_http_batch_limit_rejects_oversized_payload_without_ingestion():
     readings = [{"device_id": "BATCH-LIMIT", "rssi": -60, "ts_ms": i} for i in range(MAX_BATCH_READINGS)]
     valid = {"node_id": "node-SW", "readings": readings}
