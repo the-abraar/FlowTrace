@@ -1,11 +1,14 @@
 import os
 import sys
 import tempfile
+import pytest
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ["DATABASE_URL"] = f"sqlite+aiosqlite:///{tempfile.mkdtemp()}/x.db"
 
 from fastapi.testclient import TestClient
+from pydantic import ValidationError
 from main import app
+from ingestion.http_receiver import BatchReadingsPayload, MAX_BATCH_READINGS, parse_readings
 from positioning.zone_detector import ZoneDetector, Zone
 
 
@@ -31,6 +34,21 @@ def test_http_edge_cases():
         sw = [x for x in c.get("/api/v1/nodes/node-SW/readings").json() if x["device_id"] == "DUP"]
         assert sorted(x["rssi"] for x in sw) == [-51, -50, -50, -50]
         assert [d["id"] for d in c.get("/api/v1/devices").json()].count("DUP") == 1  # device row not duplicated
+
+
+def test_http_batch_limit_rejects_oversized_payload_without_ingestion():
+    readings = [{"device_id": "BATCH-LIMIT", "rssi": -60, "ts_ms": i} for i in range(MAX_BATCH_READINGS)]
+    valid = {"node_id": "node-SW", "readings": readings}
+    assert len(parse_readings(valid)) == MAX_BATCH_READINGS
+    assert len(BatchReadingsPayload.model_validate(valid).readings) == MAX_BATCH_READINGS
+
+    oversized = {"node_id": "node-SW", "readings": readings + [readings[0]]}
+    with pytest.raises(ValidationError):
+        parse_readings(oversized)
+    with TestClient(app, headers={"x-api-key": "test-ingest"}) as c:
+        result = c.post("/api/v1/readings", json=oversized)
+        assert result.status_code == 422
+        assert not any(r["device_id"] == "BATCH-LIMIT" for r in c.get("/api/v1/nodes/node-SW/readings").json())
 
 
 def test_zone_detector_two_zones():

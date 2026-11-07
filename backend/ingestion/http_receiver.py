@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from auth import require_ingest
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime, timezone
 import logging
@@ -15,6 +15,8 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/readings", tags=["Ingestion"])
 
+MAX_BATCH_READINGS = 500
+
 class ReadingPayload(BaseModel):
     node_id: Optional[str] = None  # may be inherited from the batch (firmware sends it once per batch)
     device_id: str
@@ -26,7 +28,7 @@ class ReadingPayload(BaseModel):
 
 class BatchReadingsPayload(BaseModel):
     node_id: Optional[str] = None
-    readings: List[ReadingPayload]
+    readings: List[ReadingPayload] = Field(max_length=MAX_BATCH_READINGS)
 
 async def persist_reading(db, node_id, device_id, rssi, dt, battery_pct=None, ts_ms=None) -> str:
     """Insert one reading; creates the device on first sight. Returns "ok", "duplicate" (same node, device, ts_ms

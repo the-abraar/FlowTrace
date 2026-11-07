@@ -5,6 +5,7 @@ import json
 import time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from ingestion.mqtt_server import MQTTServer
+from ingestion.http_receiver import MAX_BATCH_READINGS
 from positioning.triangulator import PositioningFleet
 
 
@@ -23,6 +24,14 @@ def test_mqtt_scanner_batch_and_flat():
     s.on_message(None, None, _msg({"node_id": "n2", "device_id": "T3", "rssi": -50}))  # topic says n1: rejected
     s.on_message(None, None, _msg({"readings": [{"device_id": "T4", "rssi": -50}]}))  # no node_id: taken from topic
     assert [c[:3] for c in spy.calls] == [("n1", "T1", -70), ("n1", "T2", -60), ("n1", "T4", -50)]
+
+
+def test_mqtt_rejects_oversized_batch_without_partial_ingestion():
+    spy = Spy()
+    server = MQTTServer(fleet=spy)
+    readings = [{"device_id": "T1", "rssi": -60}] * (MAX_BATCH_READINGS + 1)
+    server.on_message(None, None, _msg({"node_id": "n1", "readings": readings}))
+    assert spy.calls == []
 
 
 def test_positions_clamped_to_bounds():
