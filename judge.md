@@ -67,7 +67,7 @@ This is a 30-day demo project that has not passed its own Day-11 milestone ("Bac
   - **Duplicate identities:** `deviceId` becomes the name when a scan response was received and the MAC otherwise (`scanner.ino:187-192`). One tag shows up as two devices.
   - **Shared major/minor:** every tag ships with major/minor `0x0001/0x0001` (`beacon/config.h:23-24`).
   - **Foreign beacons:** the UUID `f7826da6-…` is Kontakt.io's default, so any Kontakt beacons in a mall would be ingested as visitors.
-  - **Unknown node IDs:** seeded node IDs are `node-NW…` (`init_db.py:38-48`), but the simulator and `main.py` use `NODE_A…`. `http_receiver.py:56` silently drops readings from unknown nodes, so nothing is persisted even from the simulator.
+  - **Unknown node IDs:** seeded node IDs are `node-NW…` (`init_db.py:38-48`), but the simulator and `main.py` use `NODE_A…`. `http_receiver.py:56` silently drops readings from unknown nodes, so nothing is persisted even from the simulator. *(2026-11-08: the simulator now uses the seeded IDs, see Update 15. Real scanners still need registered node IDs.)*
 - **Why it blocks launch:** real hardware data never reaches positioning.
 - **Fix:**
   1. Write one versioned schema (`schemas/reading.v1.json`) and generate or validate both sides against it.
@@ -508,3 +508,9 @@ Stopped early at the usage limit. Only the firmware part was done.
 - **Proof:** `test_mqtt_broker_e2e.py` gained `test_broker_refuses_anonymous_and_wrong_password`; it failed against the old anonymous broker and both broker tests pass against the compose broker (`docker compose run` on a spare port). `scripts/check.sh` passes all 10 steps.
 - Real venue names in pitch and docs replaced by "Venue A" / "Venue B"; the RFID pitch page is now `marketing/venue_a_pitch.html`.
 - **Not checked:** firmware not built with arduino-cli this round (the guard is plain C++11 and was syntax-checked with clang); not flashed.
+### Update 16 (2026-11-08, agent round): simulator fixed
+
+- **`scripts/simulate.py` now shows data:** it posted readings from `NODE_A..E` (not seeded, so the backend stored nothing and still answered 200 `partial`) and sent no API key (so a backend with `INGEST_API_KEY` set answered 401, logged only as a warning). It now uses the 9 seeded node IDs and coordinates from `init_db.py`, sends `X-API-Key` from env `INGEST_API_KEY`, and stops with exit 1 on a non-200 reply or a `partial` one (naming the unknown nodes). Connection errors and timeouts still only print and retry next tick, so it can start before the backend.
+- Test: `backend/tests/test_simulator.py` (node list equals `SEED_NODES`; one tick through the app makes the tag appear in `/api/v1/devices`; wrong key and unknown node raise).
+- Proof: local backend (uvicorn, temp sqlite, `INGEST_API_KEY` set) plus `simulate.py --users 3 --duration 6`: `/api/v1/devices` went from `[]` to the 3 `FLOWTRACE_TAG_00x` tags within 6 s; a wrong key exits 1 with the 401. README has a "Test without hardware" section; `setup.sh` prints the key step.
+- **Not changed:** the simulator's RSSI model (n=2.2, 4 dB noise) and its own `ZONES` still differ from the backend's (gap 4), so simulated positions prove the pipeline works, not that it is accurate.

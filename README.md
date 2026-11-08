@@ -97,6 +97,17 @@ npm run dev
 
 See [`firmware/README.md`](firmware/README.md) for flashing instructions.
 
+### 4. Test without hardware
+
+With the backend running, feed it simulated tags (from the repo root, in the backend venv):
+
+```bash
+INGEST_API_KEY=<the backend's key> python scripts/simulate.py --users 5 --duration 600
+curl localhost:8000/api/v1/devices   # FLOWTRACE_TAG_001..005 appear after the first 2 s tick
+```
+
+The simulator posts from the 9 seeded nodes (`node-NW` … `node-C`) and sends the key as `X-API-Key` (leave it unset only if the backend runs with `DEBUG=1`). It stops with an error if the backend rejects a batch or reports unknown nodes.
+
 ---
 
 ## Project Structure
@@ -128,7 +139,7 @@ flowtrace/
 │
 ├── scripts/
 │   ├── setup.sh         # One-command environment setup
-│   └── simulate.py      # Simulates BLE readings for testing
+│   └── simulate.py      # Simulated tags from the seeded nodes (no hardware)
 │
 └── enclosures/
     └── node_enclosure/  # 3D print files for hidden node housing
