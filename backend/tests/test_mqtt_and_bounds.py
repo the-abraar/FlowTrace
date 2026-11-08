@@ -1,3 +1,4 @@
+import asyncio
 import os
 import sys
 import types
@@ -26,12 +27,35 @@ def test_mqtt_scanner_batch_and_flat():
     assert [c[:3] for c in spy.calls] == [("n1", "T1", -70), ("n1", "T2", -60), ("n1", "T4", -50)]
 
 
-def test_mqtt_rejects_oversized_batch_without_partial_ingestion():
+def test_mqtt_rejects_oversized_batch_without_partial_ingestion(monkeypatch):
+    """Reject oversized messages before either ingestion or persistence."""
     spy = Spy()
     server = MQTTServer(fleet=spy)
+    server.loop = object()  # Enable the persistence path without a live broker.
+    persisted = []
+    scheduled = []
+
+    async def record_persistence(rows):
+        persisted.extend(rows)
+
+    def schedule(coroutine, loop):
+        assert loop is server.loop
+        scheduled.append(coroutine)
+        asyncio.run(coroutine)
+
+    monkeypatch.setattr(server, "_persist", record_persistence)
+    monkeypatch.setattr("ingestion.mqtt_server.asyncio.run_coroutine_threadsafe", schedule)
+
     readings = [{"device_id": "T1", "rssi": -60}] * (MAX_BATCH_READINGS + 1)
     server.on_message(None, None, _msg({"node_id": "n1", "readings": readings}))
     assert spy.calls == []
+    assert persisted == []
+    assert scheduled == []
+
+    server.on_message(None, None, _msg({"node_id": "n1", "readings": readings[:1]}))
+    assert len(scheduled) == 1
+    assert [call[1] for call in spy.calls] == ["T1"]
+    assert [row[1] for row in persisted] == ["T1"]
 
 
 def test_positions_clamped_to_bounds():

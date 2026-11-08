@@ -37,6 +37,7 @@ def test_http_edge_cases():
 
 
 def test_http_batch_at_limit_is_accepted_and_stored():
+    """Accept the maximum HTTP batch and persist every reading."""
     readings = [{"device_id": "BATCH-AT-LIMIT", "rssi": -60, "ts_ms": i} for i in range(MAX_BATCH_READINGS)]
     with TestClient(app, headers={"x-api-key": "test-ingest"}) as c:
         result = c.post("/api/v1/readings", json={"node_id": "node-SW", "readings": readings})
@@ -47,6 +48,7 @@ def test_http_batch_at_limit_is_accepted_and_stored():
 
 
 def test_http_batch_limit_rejects_oversized_payload_without_ingestion():
+    """Reject an oversized HTTP batch before storing any reading."""
     readings = [{"device_id": "BATCH-LIMIT", "rssi": -60, "ts_ms": i} for i in range(MAX_BATCH_READINGS)]
     valid = {"node_id": "node-SW", "readings": readings}
     assert len(parse_readings(valid)) == MAX_BATCH_READINGS
