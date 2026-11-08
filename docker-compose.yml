@@ -15,6 +15,8 @@ services:
       - READ_API_KEY=${READ_API_KEY:-}
       - MQTT_BROKER_HOST=mosquitto
       - MQTT_BROKER_PORT=1883
+      - MQTT_USERNAME=${MQTT_USERNAME:-flowtrace}
+      - MQTT_PASSWORD=${MQTT_PASSWORD:?set MQTT_PASSWORD in .env (the broker refuses anonymous clients)}
     volumes:
       - flowtrace-db:/app/data
     depends_on:
@@ -38,11 +40,16 @@ services:
   mosquitto:
     image: eclipse-mosquitto:2.0
     container_name: flowtrace-mqtt
+    entrypoint: ["/bin/sh", "/docker/mosquitto-entrypoint.sh"]
+    environment:
+      - MQTT_USERNAME=${MQTT_USERNAME:-flowtrace}
+      - MQTT_PASSWORD=${MQTT_PASSWORD:?set MQTT_PASSWORD in .env (the broker refuses anonymous clients)}
     ports:
       - "1883:1883"
       - "9001:9001"
     volumes:
-      - ./docker/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./docker/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./docker/mosquitto-entrypoint.sh:/docker/mosquitto-entrypoint.sh:ro
       - mosquitto-data:/mosquitto/data
     restart: unless-stopped
 

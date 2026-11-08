@@ -22,7 +22,7 @@ The product side is weaker than the code:
 - **Three different products are being sold:**
   - BLE positioning for game zones (`docs/pitch_deck.md`).
   - App-free pop-up analytics for D2C brands (`marketing/online_brand_strategy.md`).
-  - An RFID tap-to-ride cashless system (`marketing/bashundhara_pitch.html`). No code exists for it.
+  - An RFID tap-to-ride cashless system (`marketing/venue_a_pitch.html`). No code exists for it.
 - **The core promise is technically false.** "No app, no wristband, 100% of footfall, just walk" does not hold: the system only detects FlowTrace-flashed tags. Phones cannot be tracked reliably because of MAC randomization and iOS background limits.
 - **Nothing is validated:** no customer, no accuracy number, no legal review, no billing, no multi-venue support.
 
@@ -114,10 +114,9 @@ This is a 30-day demo project that has not passed its own Day-11 milestone ("Bac
   - No auth on any API or WebSocket route (`main.py:94-108`).
   - CORS is `*` with credentials (`main.py:86-92`).
   - Ingestion is unauthenticated, so anyone on the LAN can inject or spoof visitors.
-  - Mosquitto has `allow_anonymous true` with ports 1883 and 9001 exposed (`docker/mosquitto.conf`, `docker-compose.yml:38-40`).
+  - Mosquitto allowed anonymous clients with ports 1883 and 9001 exposed (`docker/mosquitto.conf`, `docker-compose.yml:38-40`). Fixed in Update 15.
   - Hardcoded credentials:
-    - OTA `aura_ota_secret` (`gateway/config.h:80`) and portal `admin/aura2024` (`gateway/config.h:90-91`).
-    - Hotspot passphrase in git (`deployment/popup_hotspot.sh:59`).
+    - Gateway OTA and web-portal passwords (`gateway/config.h`) and the hotspot passphrase (`deployment/popup_hotspot.sh`) were committed. Fixed in Update 15 (`CHANGE_ME` + build guard, env var).
     - WiFi creds compiled into firmware.
   - All traffic is plaintext HTTP.
   - The positions WebSocket broadcasts every tracked person's location to any client.
@@ -139,7 +138,7 @@ This is a 30-day demo project that has not passed its own Day-11 milestone ("Bac
     - There is no retention job.
     - `UserSession` is never written.
   - The agent is built to "personalize returning visitors" (`flowtrace_agent.py:57,330`), which contradicts "no cross-visit linking".
-  - The Bashundhara pitch sells demographic profiling ("Males, 18-24") and data capture tied to phone or email.
+  - The Venue A pitch sells demographic profiling ("Males, 18-24") and data capture tied to phone or email.
   - Game zones mean minors.
   - Visitor movement data is sent to OpenAI (US), which is a cross-border transfer.
   - There is no DPIA, privacy notice, consent flow or DPA template.
@@ -231,8 +230,8 @@ This is a 30-day demo project that has not passed its own Day-11 milestone ("Bac
 
 ## Major gaps
 
-- **No ICP or wedge.** Three conflicting products are on offer: a BLE venue tracker, D2C pop-up analytics, and an RFID cashless tap-to-ride system for Bashundhara Playzone. The latest pitch (`bashundhara_pitch.html`) sells something with no code at all: RFID readers on 70 rides, ride activation, end-of-visit billing, a kiosk and accounts.
-  - **Fix:** run 10 operator interviews, then pick one segment and one buying job. If Playzone wants RFID cashless, that is a different and arguably easier product with a clearer ROI (labor and coin handling), and RFID taps give ride analytics without RSSI.
+- **No ICP or wedge.** Three conflicting products are on offer: a BLE venue tracker, D2C pop-up analytics, and an RFID cashless tap-to-ride system for Venue A. The latest pitch (`venue_a_pitch.html`) sells something with no code at all: RFID readers on 70 rides, ride activation, end-of-visit billing, a kiosk and accounts.
+  - **Fix:** run 10 operator interviews, then pick one segment and one buying job. If Venue A wants RFID cashless, that is a different and arguably easier product with a clearer ROI (labor and coin handling), and RFID taps give ride analytics without RSSI.
 - **No validation.**
   - No LOI, no pilot, no willingness-to-pay data.
   - Cold emails reference a nonexistent "case study" and "already speaking with venues" (`cold_emails.md:31,45`). Remove the claims.
@@ -343,7 +342,7 @@ This is a 30-day demo project that has not passed its own Day-11 milestone ("Bac
 
 **Done (pytest: 3 passed):** `parse_readings()` in `http_receiver.py` shared by the HTTP route and `MQTTServer.process_reading` (scanner batch or flat reading; unknown nodes logged; bad payloads rejected). `tests/test_mqtt_and_bounds.py` calls `on_message` with a fake message, no broker. Optional `VENUE_WIDTH_M` and `VENUE_HEIGHT_M` in `config.py`; positions clamp to them when set. `docs/30_day_sprint.md` 8080 -> 8000. `docs/pitch_deck.md` and `marketing/online_brand_strategy.md` reworded: only opt-in FlowTrace tags are detected.
 
-**Still open:** MQTT against a real broker; docs say WebSocket `/ws/positions` but the backend serves `/ws`; `marketing/bashundhara_pitch.html` not searched for phone claims; RFID tap-to-ride has no code; firmware not compiled; no RSSI accuracy data.
+**Still open:** MQTT against a real broker; docs say WebSocket `/ws/positions` but the backend serves `/ws`; `marketing/venue_a_pitch.html` not searched for phone claims; RFID tap-to-ride has no code; firmware not compiled; no RSSI accuracy data.
 
 
 ### Update 5 (agent-made, round 6; agents' own reports unless marked)
@@ -384,7 +383,7 @@ This is a 30-day demo project that has not passed its own Day-11 milestone ("Bac
 3. **Firmware never compiled or flashed.** It now sends an `X-API-Key`; nobody has run it against the backend.
 4. **MQTT path never run against a real broker.** The Docker stack has not been run.
 5. **Auth defaults:** without `INGEST_API_KEY` writes return 503 outside debug (by design); `READ_API_KEY` is optional so reads and `/ws` are open if unset; the dashboard has no way to send a read key yet.
-6. **Privacy and law.** BLE tracking of people has no legal or privacy review; phones are not reliably trackable (MAC randomization, iOS background limits), and some docs and `marketing/bashundhara_pitch.html` may still imply otherwise.
+6. **Privacy and law.** BLE tracking of people has no legal or privacy review; phones are not reliably trackable (MAC randomization, iOS background limits), and some docs and `marketing/venue_a_pitch.html` may still imply otherwise.
 7. **Gaps in the product:** duplicate batches are inserted twice; pop-up bounce rate and A/B show n/a live; node health is only an active flag; the AI agent's hesitation signals and notifications are stubs; existing Device rows are never purged.
 8. Needs Python 3.11 or 3.12; a plain install fails on 3.14.
 
@@ -501,3 +500,11 @@ Stopped early at the usage limit. Only the firmware part was done.
 - Proof: `scripts/check.sh` passes all 10 steps (backend 15 passed, 2 skipped, both orders).
 - Follow-up (issue #4): a repeated name in `AB_TEST_ZONES` (`A,A,B`) crashed `/summary` with a 500; now `null`.
 - **Not checked:** not run in a browser or in Docker. Both figures come from the in-memory `ZoneDetector`, so they reset on a backend restart, and `total_visits` counts devices that visited a zone, not repeat visits. Bounce counts every zone, not only "pop-up" zones.
+
+### Update 15 (2026-11-08, agent round: public-repo hygiene)
+
+- **No default credentials in the repo.** Gateway `OTA_PASSWORD` and `WEB_PORTAL_PASS` are `CHANGE_ME` like `API_KEY`; both `config.h` files end in a `static_assert` that fails the build while any `CHANGE_ME` is left. `check.sh` (firmware config step) proves the guard trips with the placeholders and passes once they are replaced. `deployment/popup_hotspot.sh` reads `HOTSPOT_PASSPHRASE` (8-63 chars) instead of a passphrase in git.
+- **Broker auth.** `docker/mosquitto.conf` has `allow_anonymous false` and a password file that `docker/mosquitto-entrypoint.sh` writes from `MQTT_USERNAME` / `MQTT_PASSWORD` at container start; both compose files pass the same values to the backend client and refuse to start without `MQTT_PASSWORD`. The popup compose file now mounts `docker/mosquitto.conf` and uses the backend's `MQTT_BROKER_HOST`/`MQTT_BROKER_PORT` names.
+- **Proof:** `test_mqtt_broker_e2e.py` gained `test_broker_refuses_anonymous_and_wrong_password`; it failed against the old anonymous broker and both broker tests pass against the compose broker (`docker compose run` on a spare port). `scripts/check.sh` passes all 10 steps.
+- Real venue names in pitch and docs replaced by "Venue A" / "Venue B"; the RFID pitch page is now `marketing/venue_a_pitch.html`.
+- **Not checked:** firmware not built with arduino-cli this round (the guard is plain C++11 and was syntax-checked with clang); not flashed.

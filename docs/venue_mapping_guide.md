@@ -127,7 +127,7 @@ Corridor width: Nodes on one side if < 5m wide
                Nodes on both sides if > 5m wide
 ```
 
-**Multi-Zone (Bashundhara Retail Floor)**
+**Multi-Zone (Venue A Retail Floor)**
 
 ```
 Zone A (Food Court)         Zone B (Game Zone)
@@ -264,17 +264,17 @@ Metal creates two problems:
 ```bash
 # Set up venue configuration
 flowtrace-cli venue create \
-  --id venue_bashundhara_g1 \
-  --name "Bashundhara City Game Zone — Ground Floor" \
+  --id venue_a_g1 \
+  --name "Venue A Game Zone — Ground Floor" \
   --width_m 45.0 \
   --height_m 22.0
 
 # Register node positions (in meters from SW corner of venue)
-flowtrace-cli node register --venue venue_bashundhara_g1 --id NODE_001 --x 2.0 --y 2.0 --z 2.3
-flowtrace-cli node register --venue venue_bashundhara_g1 --id NODE_002 --x 43.0 --y 2.0 --z 2.3
-flowtrace-cli node register --venue venue_bashundhara_g1 --id NODE_003 --x 2.0 --y 20.0 --z 2.3
-flowtrace-cli node register --venue venue_bashundhara_g1 --id NODE_004 --x 43.0 --y 20.0 --z 2.3
-flowtrace-cli node register --venue venue_bashundhara_g1 --id NODE_005 --x 22.5 --y 11.0 --z 2.3
+flowtrace-cli node register --venue venue_a_g1 --id NODE_001 --x 2.0 --y 2.0 --z 2.3
+flowtrace-cli node register --venue venue_a_g1 --id NODE_002 --x 43.0 --y 2.0 --z 2.3
+flowtrace-cli node register --venue venue_a_g1 --id NODE_003 --x 2.0 --y 20.0 --z 2.3
+flowtrace-cli node register --venue venue_a_g1 --id NODE_004 --x 43.0 --y 20.0 --z 2.3
+flowtrace-cli node register --venue venue_a_g1 --id NODE_005 --x 22.5 --y 11.0 --z 2.3
 ```
 
 ### 6.2 TxPower Reference Measurement
@@ -299,7 +299,7 @@ Walk the calibration path — a pre-defined set of 15 known positions across the
 ```bash
 # Start calibration walk
 flowtrace-cli calibrate walk \
-  --venue venue_bashundhara_g1 \
+  --venue venue_a_g1 \
   --tag TAG_CALIB \
   --ground_truth data/calibration/walk_path.json \
   --output data/calibration/venue_b_walk.json
@@ -312,7 +312,7 @@ After the walk (approximately 8 minutes), compute the model:
 
 ```bash
 flowtrace-cli calibrate compute \
-  --venue venue_bashundhara_g1 \
+  --venue venue_a_g1 \
   --txpower data/calibration/venue_b_txpower.json \
   --walk data/calibration/venue_b_walk.json \
   --output data/calibration/venue_b_model.json
@@ -321,7 +321,7 @@ flowtrace-cli calibrate compute \
 Review output:
 ```json
 {
-  "venue_id": "venue_bashundhara_g1",
+  "venue_id": "venue_a_g1",
   "path_loss_exponent": 3.1,
   "tx_power_dbm": -44,
   "r_squared": 0.88,
@@ -339,19 +339,19 @@ After calibration, define logical zones as polygons:
 
 ```bash
 flowtrace-cli zone create \
-  --venue venue_bashundhara_g1 \
+  --venue venue_a_g1 \
   --id ZONE_ARCADE \
   --name "Arcade Zone" \
   --polygon "[[5,3],[20,3],[20,18],[5,18]]"  # meters from venue origin
 
 flowtrace-cli zone create \
-  --venue venue_bashundhara_g1 \
+  --venue venue_a_g1 \
   --id ZONE_FOOD \
   --name "Food Counter" \
   --polygon "[[22,3],[43,3],[43,10],[22,10]]"
 
 flowtrace-cli zone create \
-  --venue venue_bashundhara_g1 \
+  --venue venue_a_g1 \
   --id ZONE_ENTRANCE \
   --name "Entrance / Lobby" \
   --polygon "[[0,0],[45,0],[45,3],[0,3]]"
@@ -363,7 +363,7 @@ After applying the calibration model, verify with a blind test walk:
 
 ```bash
 flowtrace-cli verify \
-  --venue venue_bashundhara_g1 \
+  --venue venue_a_g1 \
   --tag TAG_CALIB \
   --ground_truth data/calibration/blind_test_path.json \
   --output reports/calibration_verification.md
@@ -373,9 +373,9 @@ Acceptable result: Mean position error ≤ 2.0m, 90th percentile ≤ 3.5m in a f
 
 ---
 
-## 7. Bashundhara City — Specific Deployment Notes
+## 7. Venue A — Specific Deployment Notes
 
-**Venue:** Bashundhara City Shopping Complex, Panthapath, Dhaka  
+**Venue:** Venue A (a large multi-floor shopping mall in Dhaka)  
 **Target Floor:** 6th or 7th floor (Game Zone / entertainment level)
 
 ### Known Environmental Factors
@@ -389,7 +389,7 @@ Acceptable result: Mean position error ≤ 2.0m, 90th percentile ≤ 3.5m in a f
 | Crowded Fridays (Jumu'ah + market day) | +10 dB body attenuation vs weekday morning | Apply crowd-correction factor: add 1.2× multiplier to path loss exponent from 2pm–6pm Fri/Sat |
 | Security camera system (2.4 GHz wireless) | +2–5 dBm noise floor | Check channel usage; request venue IT to switch cams to 5GHz |
 
-### Recommended Node Placement — Bashundhara Game Zone (Approximate)
+### Recommended Node Placement — Venue A Game Zone (Approximate)
 
 Assuming a roughly 40m × 20m game zone:
 - **NODE_001:** Above entrance archway, center, height 2.3m — covers entry zone and first 10m
@@ -400,7 +400,7 @@ Assuming a roughly 40m × 20m game zone:
 
 Estimated dead zones: < 8% (mainly directly behind the VR booth metal enclosure).
 
-### Wiring and Power at Bashundhara
+### Wiring and Power at Venue A
 
 Power outlets in Bangladeshi commercial venues are typically:
 - 220V, 50Hz AC, type C or type D sockets
@@ -418,10 +418,10 @@ Power outlets in Bangladeshi commercial venues are typically:
 
 ---
 
-## 8. Togi Fun World — Specific Deployment Notes
+## 8. Venue B — Specific Deployment Notes
 
-**Venue:** Togi Fun World (Toy/Game Venue), Mirpur or Dhanmondi location  
-*(Verify current location — Togi operates multiple venues)*
+**Venue:** Venue B (toy/game venue in Dhaka)  
+*(Verify the exact site: the operator runs several)*
 
 ### Known Environmental Factors
 
@@ -434,7 +434,7 @@ Power outlets in Bangladeshi commercial venues are typically:
 | Noise (play venue) | No RF impact but voice comms difficult | Bring printed checklists |
 | Parent clustering near entrance | Creates RSSI shadow for exit-zone node | Add extra node at entrance |
 
-### Togi-Specific Zone Suggestions
+### Venue B Zone Suggestions
 
 | Zone ID | Name | Description |
 |---------|------|-------------|
@@ -444,7 +444,7 @@ Power outlets in Bangladeshi commercial venues are typically:
 | ZONE_CANTEEN | Canteen | Food, parent waiting area |
 | ZONE_ENTRANCE | Entrance / Checkout | Ticket desk, entry/exit |
 
-**Business insight value:** Togi can use dwell time in ZONE_CANTEEN vs ZONE_ARCADE to optimize staffing and food preparation.
+**Business insight value:** Venue B can use dwell time in ZONE_CANTEEN vs ZONE_ARCADE to optimize staffing and food preparation.
 
 ---
 
