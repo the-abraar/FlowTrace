@@ -5,7 +5,7 @@
 *   **Sub-headline:** Understand your physical spaces like you understand your website.
 
 **Slide 2: The Problem**
-*   **The Status Quo:** Physical venues (like Togi Fun World) fly blind. They count tickets sold, but not *how* people spend their time.
+*   **The Status Quo:** Physical venues (malls, game zones, play centres) fly blind. They count tickets sold, but not *how* people spend their time.
 *   **The Pain Point:** You don't know where bottlenecks form, which games cause hesitation, or the true dwell time per zone.
 
 **Slide 3: The Solution - Passive Tracking**
@@ -32,4 +32,4 @@
 *   (Show the live dashboard reacting to movement in the room).
 
 **Slide 8: The Ask**
-*   Pilot program at Bashundhara Group (Togi Fun World) for 30 days. No upfront hardware cost for the pilot. Let the data prove the ROI.
+*   Pilot program at Venue A for 30 days. No upfront hardware cost for the pilot. Let the data prove the ROI.

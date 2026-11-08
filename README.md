@@ -121,7 +121,7 @@ flowtrace/
 │   ├── 30_day_sprint.md        # Day-by-day execution plan
 │   ├── hardware_bom.md         # Bill of materials (BDT prices)
 │   ├── venue_mapping_guide.md  # How to set up in a new venue
-│   ├── pitch_deck.md           # Bashundhara Group pitch content
+│   ├── pitch_deck.md           # Venue A pitch content
 │   ├── deployment_guide.md     # Production deployment
 │   ├── rssi_calibration.md     # RSSI tuning deep dive
 │   └── privacy_and_ethics.md   # Data ethics framework
@@ -143,7 +143,7 @@ By Day 30, you will have:
 - ✅ Real-time position estimation on a live map
 - ✅ Ghost Trail visualization of any visitor's path
 - ✅ LLM agent generating actionable insights automatically
-- ✅ A working demo for the Bashundhara Group pitch
+- ✅ A working demo for the Venue A pitch
 
 ---
 

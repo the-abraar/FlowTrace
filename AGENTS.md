@@ -6,6 +6,7 @@ Run `scripts/check.sh` before declaring done; `--fast` (lint, stray files, firmw
 - `backend/requirements.txt` holds pytest and everything tests need; `requirements-agent.txt` (langchain/openai) is optional. check.sh runs backend tests core-only, so backend code must not import `agent` at module level.
 - Backend tests need `INGEST_API_KEY` or `DEBUG`; `backend/tests/conftest.py` sets `INGEST_API_KEY=test-ingest`. Run pytest from `backend/` (and `tools/` for `tools/tests`).
 - Dashboard has no ESLint or test framework: check.sh runs `node --check` on `.js`, `npm run build`, and `node --test` on `dashboard/src/utils/*.test.js`.
-- Firmware (`firmware/*`, Arduino) cannot be compiled here; check.sh only greps `config.h` (BACKEND_URL on :8000, API_KEY) and rejects a literal `8080` in `.ino`. Beacon has no backend link, so it is exempt.
+- Firmware (`firmware/*`, Arduino) is not compiled by check.sh; it greps `config.h` (BACKEND_URL on :8000, API_KEY), rejects a literal `8080` in `.ino`, and runs `c++ -fsyntax-only` on each `config.h`: it must fail while a `"CHANGE_ME"` is left (the `static_assert` guard) and pass once they are replaced. Beacon has no backend link, so it is exempt.
+- No credentials in the repo: firmware secrets are `CHANGE_ME`, the broker password comes from `MQTT_PASSWORD` at container start, the hotspot passphrase from `HOTSPOT_PASSPHRASE`. Real venue or company names stay out (use "Venue A", "Venue B").
 - Known failing: `ruff` lint (~30 pre-existing default-rule hits: E401, E702, F401, F841, E712). Left visible on purpose; fix, do not loosen `ruff.toml`.
 - Claims about product state: `judge.md` (read when changing scope, demo data or accuracy claims; never edit it).

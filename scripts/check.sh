@@ -28,6 +28,12 @@ fw_config() { local bad=0 f
     grep -Eq '^#define[[:space:]]+API_KEY[[:space:]]' "$f" || { echo "$f: API_KEY missing"; bad=1; }
   done
   if grep -rnE '\b8080\b' --include='*.ino' firmware; then echo "literal 8080 in .ino"; bad=1; fi
+  if command -v c++ >/dev/null; then # config.h is plain C++: it must refuse to build while a CHANGE_ME is left
+    for f in firmware/scanner/config.h firmware/gateway/config.h; do
+      c++ -std=c++11 -fsyntax-only -x c++ "$f" 2>/dev/null && { echo "$f: builds with CHANGE_ME placeholders"; bad=1; }
+      sed 's/"CHANGE_ME"/"set"/' "$f" | c++ -std=c++11 -fsyntax-only -Wno-pragma-once-outside-header -x c++ - || { echo "$f: fails with placeholders set"; bad=1; }
+    done
+  fi
   return $bad; }
 
 backend_tests() { (cd backend && INGEST_API_KEY=${INGEST_API_KEY:-test-ingest} "$VENV/bin/python" -m pytest -q tests &&

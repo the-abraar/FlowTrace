@@ -79,8 +79,8 @@
 // OTA hostname (shows up in Arduino IDE network ports list).
 #define OTA_HOSTNAME              "flowtrace-gateway"
 
-// OTA password (strongly recommended in production).
-#define OTA_PASSWORD              "aura_ota_secret"
+// OTA password. Replace before flashing ("" disables it: not for production).
+#define OTA_PASSWORD              "CHANGE_ME"
 
 // ---------------------------------------------------------------------------
 // Web Configuration Portal
@@ -89,9 +89,10 @@
 // Port for the tiny built-in HTTP config portal.
 #define WEB_PORTAL_PORT           80
 
-// Basic-auth credentials for the portal (set to "" to disable auth).
+// Basic-auth credentials for the portal. Replace the password before flashing
+// (set it to "" to disable auth: not for production).
 #define WEB_PORTAL_USER           "admin"
-#define WEB_PORTAL_PASS           "aura2024"
+#define WEB_PORTAL_PASS           "CHANGE_ME"
 
 // ---------------------------------------------------------------------------
 // LED Indicator
@@ -114,3 +115,14 @@
 // How long the gateway waits for a scanner MQTT message before logging
 // a "no data" warning (milliseconds).
 #define IDLE_WARN_INTERVAL_MS     30000
+
+// ---------------------------------------------------------------------------
+// Placeholder guard: the build fails until every "CHANGE_ME" above is replaced.
+// ---------------------------------------------------------------------------
+// The literal is split so a search-and-replace of "CHANGE_ME" leaves the guard intact.
+constexpr bool ft_unchanged(const char *s, const char *p = "CHANGE" "_ME") {
+  return *s == *p && (*s == '\0' || ft_unchanged(s + 1, p + 1));
+}
+static_assert(!ft_unchanged(API_KEY), "config.h: set API_KEY (must equal the backend INGEST_API_KEY)");
+static_assert(!ft_unchanged(OTA_PASSWORD), "config.h: set OTA_PASSWORD");
+static_assert(!ft_unchanged(WEB_PORTAL_PASS), "config.h: set WEB_PORTAL_PASS");
