@@ -57,6 +57,12 @@ def test_mqtt_rejects_oversized_batch_without_partial_ingestion(monkeypatch):
     assert [call[1] for call in spy.calls] == ["T1"]
     assert [row[1] for row in persisted] == ["T1"]
 
+    valid = [{"device_id": f"T{i}", "rssi": -60} for i in range(MAX_BATCH_READINGS)]
+    server.on_message(None, None, _msg({"node_id": "n1", "readings": valid}))
+    assert len(scheduled) == 2
+    assert [call[1] for call in spy.calls[1:]] == [r["device_id"] for r in valid]
+    assert [row[1] for row in persisted[1:]] == [r["device_id"] for r in valid]
+
 
 def test_positions_clamped_to_bounds():
     f = PositioningFleet(bounds=(2.0, 2.0))
