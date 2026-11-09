@@ -25,16 +25,17 @@ services:
     image: flowtrace/backend:latest
     container_name: flowtrace_api
     build: 
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=sqlite:////app/data/flowtrace.db
+      - DATABASE_URL=sqlite+aiosqlite:////app/data/flowtrace.db
       - MQTT_BROKER_HOST=mosquitto
       - MQTT_BROKER_PORT=1883
       - MQTT_USERNAME=${MQTT_USERNAME:-flowtrace}
       - MQTT_PASSWORD=${MQTT_PASSWORD:?set MQTT_PASSWORD in .env (the broker refuses anonymous clients)}
+      - INGEST_API_KEY=${INGEST_API_KEY:?Set INGEST_API_KEY before starting the popup stack}
     volumes:
       - app_data:/app/data
     depends_on:
