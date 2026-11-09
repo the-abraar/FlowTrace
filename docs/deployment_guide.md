@@ -11,7 +11,9 @@ We recommend running the backend on a dedicated Linux machine (Ubuntu 22.04 LTS)
 1.  Clone the repository.
 2.  Set `OPENAI_API_KEY` in `backend/.env`.
 3.  Set `VITE_API_URL` to the server's static IP in `dashboard/.env.production`.
-4.  Run `docker-compose up -d --build`.
+4.  Create `.env` next to `docker-compose.yml` with `MQTT_PASSWORD=<long random value>` (optionally `MQTT_USERNAME`, default `flowtrace`), plus `INGEST_API_KEY` and `READ_API_KEY`. The broker refuses anonymous clients and compose will not start without `MQTT_PASSWORD`.
+5.  Run `docker compose up -d --build`.
+6.  Pop-up hotspot (`deployment/popup_hotspot.sh`): run it as `sudo HOTSPOT_PASSPHRASE='<8-63 chars>' ./popup_hotspot.sh`; no passphrase is stored in the repo.
 
 ## Node Deployment Strategy
 *   **Height:** Place nodes 2.5 - 3 meters high to ensure line-of-sight over crowds (human bodies block 2.4GHz signals).

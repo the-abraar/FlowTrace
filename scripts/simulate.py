@@ -1,10 +1,13 @@
 """
 simulate.py — FlowTrace BLE Reading Simulator
-Simulates 3 scanner nodes detecting 5 moving users in a 10m x 10m room.
+Simulates the 9 seeded scanner nodes detecting moving users in a 10m x 10m room.
 Use this to test the backend without physical hardware.
 
 Usage:
-    python scripts/simulate.py --server http://localhost:8000 --users 5 --duration 300
+    INGEST_API_KEY=<same key as the backend> python scripts/simulate.py --server http://localhost:8000 --users 5 --duration 300
+
+The key is sent as X-API-Key. Leave INGEST_API_KEY unset only if the backend runs with DEBUG=1.
+A rejected batch (401/503/422) or a "partial" reply (unknown node IDs) stops the run with an error.
 """
 
 import asyncio
@@ -13,15 +16,22 @@ import random
 import math
 import time
 import argparse
+import os
+import sys
 from datetime import datetime, timezone
 
-# ─── Node layout (x, y) in meters, for a 10m x 10m room ───────────────────────
+# ─── Node layout (x, y) in meters: must equal SEED_NODES in backend/database/init_db.py ─
+# (backend/tests/test_simulator.py checks it); readings from any other node ID are not stored.
 NODES = {
-    "NODE_A": {"x": 0.5, "y": 0.5},
-    "NODE_B": {"x": 9.5, "y": 0.5},
-    "NODE_C": {"x": 5.0, "y": 9.5},
-    "NODE_D": {"x": 0.5, "y": 9.5},
-    "NODE_E": {"x": 9.5, "y": 9.5},
+    "node-NW": {"x": 0.0, "y": 10.0},
+    "node-NE": {"x": 10.0, "y": 10.0},
+    "node-SE": {"x": 10.0, "y": 0.0},
+    "node-SW": {"x": 0.0, "y": 0.0},
+    "node-N": {"x": 5.0, "y": 10.0},
+    "node-S": {"x": 5.0, "y": 0.0},
+    "node-E": {"x": 10.0, "y": 5.0},
+    "node-W": {"x": 0.0, "y": 5.0},
+    "node-C": {"x": 5.0, "y": 5.0},
 }
 
 # ─── Venue zones ───────────────────────────────────────────────────────────────
@@ -106,20 +116,35 @@ class SimulatedUser:
         return readings
 
 
+class SimulatorError(Exception):
+    """The backend refused the data: retrying the same config cannot help."""
+
+
+def auth_headers() -> dict:
+    key = os.getenv("INGEST_API_KEY")
+    return {"X-API-Key": key} if key else {}
+
+
 async def post_readings(client: httpx.AsyncClient, server: str, readings: list[dict]):
-    """Send a batch of readings to the backend."""
+    """Send a batch of readings to the backend. Raises SimulatorError if any of it was not accepted."""
     try:
         resp = await client.post(
             f"{server}/api/v1/readings",
             json={"readings": readings},
             timeout=5.0,
         )
-        if resp.status_code != 200:
-            print(f"  [WARN] Server returned {resp.status_code}: {resp.text[:100]}")
     except httpx.ConnectError:
         print(f"  [ERROR] Cannot connect to {server}. Is the backend running?")
-    except Exception as e:
-        print(f"  [ERROR] {e}")
+        return
+    except httpx.TimeoutException as e:
+        print(f"  [ERROR] {e!r}")
+        return
+    if resp.status_code != 200:
+        hint = " (set INGEST_API_KEY to the backend's key)" if resp.status_code in (401, 503) else ""
+        raise SimulatorError(f"server returned {resp.status_code}{hint}: {resp.text[:200]}")
+    body = resp.json()
+    if body.get("status") != "ok":
+        raise SimulatorError(f"server stored only part of the batch, unknown nodes {body.get('unknown_nodes')}: {body}")
 
 
 async def run_simulation(server: str, num_users: int, duration: int):
@@ -135,7 +160,7 @@ async def run_simulation(server: str, num_users: int, duration: int):
     start_time = time.time()
     tick = 0
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(headers=auth_headers()) as client:
         while time.time() - start_time < duration:
             tick_start = time.time()
             dt = 2.0  # simulate 2-second ticks
@@ -173,7 +198,10 @@ def main():
     parser.add_argument("--duration", type=int, default=300, help="Simulation duration in seconds")
     args = parser.parse_args()
 
-    asyncio.run(run_simulation(args.server, args.users, args.duration))
+    try:
+        asyncio.run(run_simulation(args.server, args.users, args.duration))
+    except SimulatorError as e:
+        sys.exit(f"  [ERROR] {e}")
 
 
 if __name__ == "__main__":

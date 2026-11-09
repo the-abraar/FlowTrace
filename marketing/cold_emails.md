@@ -38,7 +38,7 @@ Best,
 
 ---
 
-## Template 3: The Entertainment/Arcade Specific Angle (e.g., Togi Fun World)
+## Template 3: The Entertainment/Arcade Specific Angle (e.g., Venue B)
 **Subject:** Maximizing ride utilization and dwell time at [Venue Name]
 
 Hi [First Name],

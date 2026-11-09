@@ -2,7 +2,7 @@
 
 **Turn Foot Traffic into Actionable Growth—No Customer App Needed (FlowTrace tags required).**
 
-Welcome to FlowTrace, the first end-to-end passive tracking and agentic analytics platform designed specifically for physical retail spaces, malls, and entertainment zones in Bangladesh (like Bashundhara Group / Togi Fun World). 
+Welcome to FlowTrace, the first end-to-end passive tracking and agentic analytics platform designed specifically for physical retail spaces, malls, and entertainment zones in Bangladesh (large malls, game zones and play centres). 
 
 ## Why FlowTrace?
 

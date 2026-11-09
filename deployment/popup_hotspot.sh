@@ -9,6 +9,13 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
+# WPA2 passphrase comes from the environment so none is stored in the repo:
+#   sudo HOTSPOT_PASSPHRASE='<8-63 chars>' ./popup_hotspot.sh
+if [ "${#HOTSPOT_PASSPHRASE}" -lt 8 ] || [ "${#HOTSPOT_PASSPHRASE}" -gt 63 ]; then
+  echo "Set HOTSPOT_PASSPHRASE (8-63 characters) before running" >&2
+  exit 1
+fi
+
 echo "Installing hostapd and dnsmasq..."
 apt-get update
 apt-get install -y hostapd dnsmasq iptables netfilter-persistent iptables-persistent
@@ -56,7 +63,7 @@ macaddr_acl=0
 auth_algs=1
 ignore_broadcast_ssid=0
 wpa=2
-wpa_passphrase=FlowTraceSecure2026!
+wpa_passphrase=${HOTSPOT_PASSPHRASE}
 wpa_key_mgmt=WPA-PSK
 wpa_pairwise=TKIP
 rsn_pairwise=CCMP

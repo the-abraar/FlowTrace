@@ -112,3 +112,12 @@
 
 // JSON batch maximum size (bytes) — guard against oversized HTTP bodies.
 #define JSON_BUFFER_SIZE          8192
+
+// ---------------------------------------------------------------------------
+// Placeholder guard: the build fails until every "CHANGE_ME" above is replaced.
+// ---------------------------------------------------------------------------
+// The literal is split so a search-and-replace of "CHANGE_ME" leaves the guard intact.
+constexpr bool ft_unchanged(const char *s, const char *p = "CHANGE" "_ME") {
+  return *s == *p && (*s == '\0' || ft_unchanged(s + 1, p + 1));
+}
+static_assert(!ft_unchanged(API_KEY), "config.h: set API_KEY (must equal the backend INGEST_API_KEY)");

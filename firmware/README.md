@@ -17,9 +17,14 @@ This directory contains the ESP32 firmware for Project FlowTrace.
 
 ### Flashing a Scanner Node
 1.  Open `scanner/scanner.ino`.
-2.  Edit `config.h` to set the `WIFI_SSID`, `WIFI_PASSWORD`, and `BACKEND_URL`.
+2.  Edit `config.h` to set the `WIFI_SSID`, `WIFI_PASSWORD`, `BACKEND_URL` and `API_KEY` (same value as the backend's `INGEST_API_KEY`). The build fails with a `static_assert` while any value is still `CHANGE_ME`.
 3.  Ensure `NODE_ID` is unique for each flashed ESP32 (e.g., `NODE_A`, `NODE_B`).
 4.  Connect ESP32, select port, and upload.
+
+### Flashing the Gateway
+1.  Open `gateway/gateway.ino`.
+2.  In `config.h`, replace every `CHANGE_ME`: `API_KEY`, `OTA_PASSWORD` and `WEB_PORTAL_PASS`. The build fails until you do. Set `MQTT_USERNAME`/`MQTT_PASSWORD` to the broker's credentials (the compose broker refuses anonymous clients).
+3.  Upload.
 
 ### Flashing a Beacon
 1.  Open `beacon/beacon.ino`.
