@@ -1,0 +1,75 @@
+{
+ "source": "GET /api/v1/analytics/summary at the end of the run",
+ "backend": {
+  "zones": {
+   "ENTRANCE": {
+    "label": "Entrance",
+    "current_occupancy": 0,
+    "active_device_ids": [],
+    "avg_dwell_seconds": 24.0,
+    "total_visits": 4
+   },
+   "VR_ZONE": {
+    "label": "VR Experience",
+    "current_occupancy": 1,
+    "active_device_ids": [
+     "TAG_4"
+    ],
+    "avg_dwell_seconds": 48.6,
+    "total_visits": 4
+   },
+   "FOOD_COURT": {
+    "label": "Food Court",
+    "current_occupancy": 1,
+    "active_device_ids": [
+     "TAG_2"
+    ],
+    "avg_dwell_seconds": 58.1,
+    "total_visits": 3
+   },
+   "LASER_TAG": {
+    "label": "Laser Tag Arena",
+    "current_occupancy": 1,
+    "active_device_ids": [
+     "TAG_1"
+    ],
+    "avg_dwell_seconds": 49.1,
+    "total_visits": 4
+   },
+   "EXIT": {
+    "label": "Exit Area",
+    "current_occupancy": 1,
+    "active_device_ids": [
+     "TAG_3"
+    ],
+    "avg_dwell_seconds": 26.6,
+    "total_visits": 4
+   },
+   "RETAIL": {
+    "label": "Retail / Merch",
+    "current_occupancy": 0,
+    "active_device_ids": [],
+    "avg_dwell_seconds": 55.1,
+    "total_visits": 4
+   }
+  },
+  "bounce_rate": 0.992,
+  "ab_test": {
+   "a": "Entrance",
+   "b": "VR Experience",
+   "a_share": 0.5,
+   "b_share": 0.5
+  }
+ },
+ "vs_script_truth": {
+  "samples": 536,
+  "finished_visits": {
+   "backend": 119,
+   "script": 42
+  },
+  "bounce_rate_script": 0.857,
+  "zone_match": 0.746,
+  "error_m_median": 1.44,
+  "error_m_p90": 2.83
+ }
+}
