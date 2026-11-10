@@ -1,3 +1,5 @@
+Frozen until an operator says yes. Allowed: public-repo hygiene, the simulator fix, LEARNINGS.md and a demo page. Call source: `~/Everything/dev/products/decision.md` (labs under the November bet).
+
 # AGENTS.md
 
 Run `scripts/check.sh` before declaring done; `--fast` (lint, stray files, firmware config, HTML sinks) is the pre-commit hook (`core.hooksPath` is set to `.githooks` locally; re-run `git config core.hooksPath .githooks` on a fresh clone). Standards: `CODING_STANDARDS.md`.
